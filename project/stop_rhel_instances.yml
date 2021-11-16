@@ -3,11 +3,11 @@
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: "Get OCI Compute Instance Facts"
+    - name: Get OCI Compute Instance Facts
       oracle.oci.oci_compute_instance_facts:
-        config_file_location: "{{ config_file_location }}"
-        config_profile_name: "{{ config_profile_name }}"
-        compartment_id: "{{ compartment_id }}"
+        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
       register: compute_facts
     - name: Get machine OCIDs
       set_fact:
@@ -17,9 +17,9 @@
         var: ocids
       when: (ocids is defined) and (ocids | length > 0)
     - oracle.oci.oci_compute_instance_actions:
-        config_file_location: "{{ config_file_location }}"
-        config_profile_name: "{{ config_profile_name }}"
-        compartment_id: "{{ compartment_id }}"
+        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
         instance_id: "{{ item }}"
         action: softstop
       with_items: "{{ ocids }}"
