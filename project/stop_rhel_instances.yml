@@ -3,7 +3,7 @@
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: "Get Instance Facts"
+    - name: "Get OCI Compute Instance Facts"
       oracle.oci.oci_compute_instance_facts:
         config_file_location: "{{ config_file_location }}"
         config_profile_name: "{{ config_profile_name }}"
