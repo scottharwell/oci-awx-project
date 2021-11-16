@@ -1,0 +1,16 @@
+# Ignore retry files
+*.retry
+
+# Ignore local host files
+hosts.yaml
+
+# Ignore playbooks in other repos
+mac/mac-dev-playbook
+
+# Other
+.DS_Store
+mac-dev-playbook
+
+# Ansible Runner
+artifacts
+env

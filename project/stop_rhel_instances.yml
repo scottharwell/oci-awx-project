@@ -1,0 +1,26 @@
+---
+- name: Stop Public RHEL Instances
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: "Get Instance Facts"
+      oracle.oci.oci_compute_instance_facts:
+        config_file_location: "{{ config_file_location }}"
+        config_profile_name: "{{ config_profile_name }}"
+        compartment_id: "{{ compartment_id }}"
+      register: compute_facts
+    - name: Get machine OCIDs
+      set_fact:
+        ocids: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING` && !(shape|contains(@,`A1`)) && freeform_tags.os ==`rhel8`].id') }}"
+    - name: "Found OCIDs"
+      debug:
+        var: ocids
+      when: (ocids is defined) and (ocids | length > 0)
+    - oracle.oci.oci_compute_instance_actions:
+        config_file_location: "{{ config_file_location }}"
+        config_profile_name: "{{ config_profile_name }}"
+        compartment_id: "{{ compartment_id }}"
+        instance_id: "{{ item }}"
+        action: softstop
+      with_items: "{{ ocids }}"
+      when: (ocids is defined) and (ocids | length > 0)
