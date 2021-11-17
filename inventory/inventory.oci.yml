@@ -5,23 +5,23 @@ plugin: oracle.oci.oci
 debug: false
 
 # Select regions
-regions:
-  - us-ashburn-1
+# regions:
+#   - us-ashburn-1
 
 # Config file options
-config_file: ~/.oci/config
-config_profile: DEFAULT
+#config_file: ~/.oci/config
+#config_profile: DEFAULT
 
 # Fetch host types
 fetch_db_hosts: false
 fetch_compute_hosts: true
 
 # Caching
-cache: false
-cache_plugin: jsonfile
-cache_timeout: 7200
-cache_connection: /tmp/oci_inventory
-cache_prefix: oci
+# cache: false
+# cache_plugin: jsonfile
+# cache_timeout: 7200
+# cache_connection: /tmp/oci_inventory
+# cache_prefix: oci
 
 # Enable threads to speedup lookup
 enable_parallel_processing: true
