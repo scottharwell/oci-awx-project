@@ -11,7 +11,7 @@
       register: compute_facts
     - name: Get machine OCIDs
       set_fact:
-        ocids: "{{ compute_facts | json_query('instances[?lifecycle_state==`STOPPED` && !(shape|contains(@,`A1`)) && freeform_tags.os ==`rhel8`].id') }}"
+        ocids: "{{ compute_facts | json_query('instances[?lifecycle_state ==`STOPPED` && !(shape|contains(@,`A1`)) && freeform_tags.os ==`rhel8`].id') }}"
     - name: "Found OCIDs"
       debug:
         var: ocids
