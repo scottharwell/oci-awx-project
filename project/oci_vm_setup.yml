@@ -1,6 +1,6 @@
 ---
 - name: Run setup process
-  hosts: all
+  hosts: all_hosts
   become: true
   vars:
     ssh_public_keys:

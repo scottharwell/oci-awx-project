@@ -1,6 +1,7 @@
 ---
 - name: Stop Public RHEL Instances
   hosts: localhost
+  connection: local
   gather_facts: false
   tasks:
     - name: Get OCI Compute Instance Facts

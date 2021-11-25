@@ -1,6 +1,7 @@
 ---
 - name: Get running VM IPs
   hosts: localhost
+  connection: local
   gather_facts: false
   tasks:
     - name: Debug ENV vars
