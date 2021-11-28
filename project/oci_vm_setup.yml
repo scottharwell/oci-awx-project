@@ -1,4 +1,36 @@
 ---
+- name: Wait for servers to be accessible on port 22
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Debug ENV vars
+      debug: 
+        msg: 
+        - Config File: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        - Debug profile: "{{ lookup('env', 'OCI_PROFILE') }}"
+        - Compartment ID: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+    - name: Get OCI Compute Instance Facts
+      oracle.oci.oci_compute_instance_facts:
+        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+      register: compute_facts
+    - name: Get machine IP addresses
+      set_fact:
+        ips: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING`].primary_public_ip') }}"
+    - name: Found IP addresses
+      debug:
+        var: ips
+      when: (ips is defined) and (ips | length > 0)
+    - name: Wait for port 22 on all hosts
+      wait_for:
+        port: 22
+        delay: 10
+        host: "{{ item }}"
+      with_items: "{{ ips }}"
+      # use of > 1 is intensional
+      when: ips is iterable and (ips | length > 0)
 - name: Run setup process
   hosts: all_hosts
   become: true
