@@ -1,0 +1,38 @@
+---
+- name: Create ARM VM
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create instance
+      register: instance
+      oracle.oci.oci_compute_instance:
+        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
+
+        display_name: "Ansible ARM VM"
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        availability_domain: "crPE:US-ASHBURN-AD-3"
+        fault_domain: "FAULT-DOMAIN-3"
+        shape: "VM.Standard.A1.Flex"
+        shape_config:
+          memory_in_gbs: 6
+          ocpus: 1
+        preserve_boot_volume: false
+        agent_config:
+          are_all_plugins_disabled: false
+          is_management_disabled: false
+          is_monitoring_disabled: false
+        metadata:
+          ssh_authorized_keys: "{{ ssh_authorized_keys }}"
+        source_details:
+          source_type: "image"
+          image_id: "{{ oracle_linux_8_arm_ocid }}"
+        create_vnic_details:
+          assign_public_ip: true
+          subnet_id: "{{ public_subnet_id }}"
+        freeform_tags:
+          deployment: "ansible"
+    - name: Instance Details
+      debug:
+        var: instance
