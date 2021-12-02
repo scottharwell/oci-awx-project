@@ -45,7 +45,7 @@
       - name: scott
         admin: true
     passwordless_admin: true
-    config_fish: false
-    config_vim: false
+    config_fish: true
+    config_vim: true
   roles:
     - role: scottharwell.server_setup
