@@ -14,3 +14,4 @@ mac-dev-playbook
 # Ansible Runner
 artifacts
 env
+*.log
