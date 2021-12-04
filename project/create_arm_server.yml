@@ -35,5 +35,5 @@
           deployment: "ansible"
     - name: Instance Details
       debug:
-        var: created_instance.id
-      when: created_instance is succeeded and created_instance.id is defined
+        var: created_instance
+      when: created_instance is succeeded
