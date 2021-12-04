@@ -1,0 +1,32 @@
+---
+- name: Delete ARM VMs created by Ansible
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Get instance facts
+      register: instance_facts
+      oracle.oci.oci_compute_instance_facts:
+        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+    - name: Get OCIDs
+      set_fact:
+        ocids: "{{ instance_facts | json_query('instances[?freeform_tags.deployment==`ansible` && lifecycle_state!=`TERMINATED`].id') }}"
+    - name: Found OCIDs
+      debug:
+        var: ocids
+    - name: Delete instances
+      oracle.oci.oci_compute_instance:
+        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        id: "{{ item }}"
+        state: absent
+      with_items: "{{ ocids }}"
+      register: deleted_instances
+      when: (ocids is defined) and (ocids | length > 0)
+    - name: Debug deleted instances
+      debug:
+        var: deleted_instances.msg
+      when: deleted_instances is succeeded and deleted_instances.msg is defined

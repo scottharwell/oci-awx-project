@@ -5,12 +5,12 @@
   gather_facts: false
   tasks:
     - name: Create instance
-      register: instance
+      register: created_instance
       oracle.oci.oci_compute_instance:
         config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
         config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
 
-        display_name: "Ansible ARM VM"
+        display_name: "{{ server_name }}"
         compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
         availability_domain: "crPE:US-ASHBURN-AD-3"
         fault_domain: "FAULT-DOMAIN-3"
@@ -35,4 +35,5 @@
           deployment: "ansible"
     - name: Instance Details
       debug:
-        var: instance
+        var: created_instance.id
+      when: created_instance is succeeded and created_instance.id is defined
