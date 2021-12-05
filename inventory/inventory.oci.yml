@@ -34,3 +34,4 @@ hostname_format_preferences:
 
 groups:
   terraform: "'terraform' == freeform_tags.deployment"
+  ansible: "'ansible' == freeform_tags.deployment"
