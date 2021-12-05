@@ -12,12 +12,12 @@
 
         display_name: "{{ server_name }}"
         compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
-        availability_domain: "crPE:US-ASHBURN-AD-3"
-        fault_domain: "FAULT-DOMAIN-3"
-        shape: "VM.Standard.A1.Flex"
+        availability_domain: "{{ availability_domain }}"
+        fault_domain: "{{ fault_domain }}"
+        shape: "{{ vm_shape }}"
         shape_config:
-          memory_in_gbs: 6
-          ocpus: 1
+          memory_in_gbs: "{{ 6 }}"
+          ocpus: "{{ 1 }}"
         preserve_boot_volume: false
         agent_config:
           are_all_plugins_disabled: false
