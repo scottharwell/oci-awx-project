@@ -1,0 +1,11 @@
+---
+- name: Delete Bastion
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Delete Bastion
+      oracle.oci.oci_bastion:
+        bastion_type: standard
+        state: absent
+        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        bastion_id: "{{ ocid }}"
