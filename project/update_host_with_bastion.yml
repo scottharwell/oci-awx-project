@@ -1,0 +1,19 @@
+---
+- name: Create a bastion session
+  import_playbook: create_bastion_session.yml
+
+- name: Update OCI host through bastion server
+  hosts: bastions
+  become: true
+  vars:
+    ssh_public_keys: "{{ ssh_keys }}"
+    users:
+      - name: opc
+        admin: true
+      - name: scott
+        admin: true
+    passwordless_admin: true
+    config_fish: true
+    config_vim: true
+  roles:
+    - role: scottharwell.server_setup

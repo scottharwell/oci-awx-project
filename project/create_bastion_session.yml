@@ -1,5 +1,5 @@
 ---
-- name: Create bastion session
+- name: Create Bastion Session
   hosts: localhost
   gather_facts: false
   tasks:
@@ -55,9 +55,9 @@
     - name: Debug bastion session
       debug:
         var: bastion_session
-    - name: Debug bastion session command
-      debug:
-        var: bastion_session.session.ssh_metadata.command
+    # - name: Debug bastion session command
+    #   debug:
+    #     var: bastion_session.session.ssh_metadata.command
     - name: Set command fact
       set_fact:
         extracted_command: "{{ bastion_session.session.ssh_metadata.command }}"
@@ -68,16 +68,19 @@
     - name: Extract proxy command 
       set_fact:
         proxy_command: "{{ ssh_command_with_key | regex_search('(ProxyCommand=.*\")', ignorecase=True) }}"
-    - name: Debug SSH command
-      debug:
-        var: ssh_command_with_key
-    - name: Debug bastion hostname
-      debug:
-        var: bastion_hostname
-    - name: Debug proxy command
-      debug:
-        var: proxy_command
+    # - name: Debug SSH command
+    #   debug:
+    #     var: ssh_command_with_key
+    # - name: Debug bastion hostname
+    #   debug:
+    #     var: bastion_hostname
+    # - name: Debug proxy command
+    #   debug:
+    #     var: proxy_command
     - name: Add bastion host to inventory
       add_host:
         hostname: "{{ bastion_hostname }}"
         ansible_ssh_common_args: "-o {{ proxy_command }}"
+        ansible_user: opc
+        groups:
+          - bastions
