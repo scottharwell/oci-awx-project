@@ -12,5 +12,5 @@
         name: "{{ bastion_name }}"
         client_cidr_block_allow_list: "{{ allowed_ips }}"
         max_session_ttl_in_seconds: 1800
-        freeform_tags: 
+        freeform_tags:
           deployment: ansible

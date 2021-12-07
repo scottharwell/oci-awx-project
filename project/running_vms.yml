@@ -5,11 +5,11 @@
   gather_facts: false
   tasks:
     - name: Debug ENV vars
-      debug: 
-        msg: 
-        - Config File: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        - Debug profile: "{{ lookup('env', 'OCI_PROFILE') }}"
-        - Compartment ID: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+      debug:
+        msg:
+          - Config File: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
+          - Debug profile: "{{ lookup('env', 'OCI_PROFILE') }}"
+          - Compartment ID: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
     - name: Get OCI Compute Instance Facts
       oracle.oci.oci_compute_instance_facts:
         config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"

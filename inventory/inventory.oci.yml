@@ -9,8 +9,8 @@ debug: false
 #   - us-ashburn-1
 
 # Config file options
-#config_file: ~/.oci/config
-#config_profile: DEFAULT
+# config_file: ~/.oci/config
+# config_profile: DEFAULT
 
 # Fetch host types
 fetch_db_hosts: false

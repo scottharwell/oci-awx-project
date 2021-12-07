@@ -11,8 +11,3 @@
         compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
         id: "{{ instance_ocid }}"
         state: absent
-      register: deleted_instances
-    - name: Debug deleted instances
-      debug:
-        var: deleted_instances.msg
-      when: deleted_instances is succeeded and deleted_instances.msg is defined
