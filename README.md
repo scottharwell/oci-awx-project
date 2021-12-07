@@ -14,6 +14,12 @@ OCI uses the following diagram to demonstrate how the service works.
 
 ![Bastion Service Diagram](https://docs.oracle.com/en-us/iaas/Content/Bastion/images/bastion-overview-diagram.png)
 
-The `create_bastion_session.yml` playbook automates establishing sessions through the bastion service in order to connect to those private virtual machines.
+The `create_bastion_session.yml` playbook automates establishing sessions through the bastion service in order to connect to those private virtual machines.  Once run, it will add each bastion session to the `all_hosts` and `bastion` host groups, which can then be used to automate against just as if they were exposed through the dynamic inventory.
 
 ## OCI VM Setup
+
+This is a simple VM setup automation the configures servers with packages and CLI configs that I use commonly.  It has no OCI-specific use.
+
+## RHEL Instances
+
+I use these playbooks to demonstrate finding certain servers based on OCI tags and performing instance operations against those VMs.
