@@ -70,9 +70,10 @@
     - name: Add bastion host to inventory
       add_host:
         hostname: "{{ item.primary_private_ip }}"
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null -o {{ item.proxy_command }}"
+        ansible_connection: ssh
+        ansible_ssh_common_args: "-o {{ item.proxy_command }}"
+        ansible_ssh_extra_args: "-o StrictHostKeyChecking=no"
         ansible_user: opc
-        host_key_checking: false
         groups:
           - all_hosts
           - bastions
