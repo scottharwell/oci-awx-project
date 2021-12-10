@@ -61,7 +61,7 @@
         session: |
           {
             'primary_private_ip': '{{ item.item.primary_private_ip }}',
-            'proxy_command': '{{ ((item.session.ssh_metadata.command + '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null') | regex_replace("<privateKey>", "$HOME/.ssh/id_ed25519") | regex_search('(ProxyCommand=.*\")', ignorecase=True)) }}'
+            'proxy_command': '{{ (item.session.ssh_metadata.command | regex_replace("<privateKey>", "$HOME/.ssh/id_ed25519") | regex_search('ProxyCommand=\"(.*)\"', ignorecase=True) | regex_replace('ProxyCommand=\"(.*)\"','ProxyCommand=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \1\"', ignorecase=True)) }}'
           }
       with_items: "{{ bastion_sessions.results }}"
     - name: Debug connections
@@ -70,6 +70,7 @@
     - name: Add bastion host to inventory
       add_host:
         hostname: "{{ item.primary_private_ip }}"
+        ansible_connection: ssh
         ansible_ssh_common_args: "-o {{ item.proxy_command }}"
         ansible_user: opc
         groups:
