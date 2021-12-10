@@ -72,7 +72,6 @@
         hostname: "{{ item.primary_private_ip }}"
         ansible_connection: ssh
         ansible_ssh_common_args: "-o {{ item.proxy_command }}"
-        ansible_ssh_extra_args: "-o StrictHostKeyChecking=no"
         ansible_user: opc
         groups:
           - all_hosts
