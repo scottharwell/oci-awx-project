@@ -61,7 +61,7 @@
         session: |
           {
             'primary_private_ip': '{{ item.item.primary_private_ip }}',
-            'proxy_command': '{{ (item.session.ssh_metadata.command | regex_replace("<privateKey>", "$HOME/.ssh/id_ed25519") | regex_search('ProxyCommand=\"(.*)\"', ignorecase=True) | regex_replace('ProxyCommand=\"(.*)\"','ProxyCommand=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \1\"', ignorecase=True)) }}'
+            'proxy_command': '{{ (item.session.ssh_metadata.command | regex_replace("<privateKey>", lookup('env', 'OCI_SSH_KEY_FILE')) | regex_search('ProxyCommand=\"(.*)\"', ignorecase=True) | regex_replace('ProxyCommand=\"(.*)\"','ProxyCommand=\"\1 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"', ignorecase=True)) }}'
           }
       with_items: "{{ bastion_sessions.results }}"
     - name: Debug connections
