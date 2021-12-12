@@ -1,0 +1,10 @@
+---
+# This playbook consolidates many individual playbooks into a workflow similar to AWX
+- name: Start RHEL servers that are typically stopped
+  import_playbook: start_rhel_instances.yml
+- name: Create bastion sessions for private servers
+  import_playbook: create_bastion_sessions.yml
+- name: Update Servers
+  import_playbook: oci_vm_setup.yml
+- name: Stop RHEL servers
+  import_playbook: stop_rhel_instances.yml
