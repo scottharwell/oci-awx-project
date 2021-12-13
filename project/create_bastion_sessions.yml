@@ -72,7 +72,7 @@
         hostname: "{{ item.primary_private_ip }}"
         ansible_connection: ssh
         ansible_ssh_common_args: "-o {{ item.proxy_command }}"
-        ansible_user: opc
+        ansible_user: "{{ target_user_name }}"
         groups:
           - all_hosts
           - bastions
