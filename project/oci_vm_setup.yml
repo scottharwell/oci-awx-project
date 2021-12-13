@@ -1,4 +1,7 @@
 ---
+- name: Create bastion sessions for private servers
+  import_playbook: create_bastion_sessions.yml
+
 - name: Update running OCI VMs
   hosts: all_hosts
   become: true
