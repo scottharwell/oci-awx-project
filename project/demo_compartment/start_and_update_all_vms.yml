@@ -3,6 +3,6 @@
 - name: Start RHEL servers that are typically stopped
   import_playbook: start_rhel_instances.yml
 - name: Update Servers
-  import_playbook: oci_vm_setup.yml
+  import_playbook: ../tenancy/oci_vm_setup.yml
 - name: Stop RHEL servers
   import_playbook: stop_rhel_instances.yml

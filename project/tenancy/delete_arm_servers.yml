@@ -7,9 +7,7 @@
     - name: Get instance facts
       register: instance_facts
       oracle.oci.oci_compute_instance_facts:
-        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
     - name: Get OCIDs
       set_fact:
         ocids: "{{ instance_facts | json_query('instances[?freeform_tags.deployment==`ansible` && lifecycle_state!=`TERMINATED`].id') }}"
@@ -18,9 +16,7 @@
         var: ocids
     - name: Delete instances
       oracle.oci.oci_compute_instance:
-        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
         id: "{{ item }}"
         state: absent
       with_items: "{{ ocids }}"

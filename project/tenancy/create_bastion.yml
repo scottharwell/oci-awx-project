@@ -7,10 +7,10 @@
       oracle.oci.oci_bastion:
         bastion_type: standard
         state: present
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
         target_subnet_id: "{{ subnet_id }}"
         name: "{{ bastion_name }}"
         client_cidr_block_allow_list: "{{ allowed_ips }}"
-        max_session_ttl_in_seconds: 1800
+        max_session_ttl_in_seconds: "{{ bastion_ttl }}"
         freeform_tags:
           deployment: ansible

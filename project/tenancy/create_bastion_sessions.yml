@@ -5,9 +5,13 @@
   vars:
     connections: []
   tasks:
+    - name: Verify SSH env var is set
+      fail:
+        msg: "OCI_SSH_KEY_FILE is not set"
+      when: lookup('env', 'OCI_SSH_KEY_FILE') is undefined or lookup('env', 'OCI_SSH_KEY_FILE') == ""
     - name: Get Ansible bastion
       oracle.oci.oci_bastion_facts:
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
         bastion_lifecycle_state: ACTIVE
       register: bastion_facts
     # - name: Debug Bastions
@@ -22,9 +26,7 @@
     #     var: bastion_ocid
     - name: Get connected host facts
       oracle.oci.oci_compute_instance_facts:
-        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
         lifecycle_state: "RUNNING"
       register: compute_facts
     # - name: Debug instances
@@ -32,7 +34,7 @@
     #     var: compute_facts
     - name: Get instance private ip
       set_fact:
-        instances: "{{ compute_facts | json_query('instances[?primary_public_ip==`null`]') }}"
+        instances: "{{ compute_facts | json_query('instances[?primary_public_ip==`null` && !(contains(display_name,`oke-`))]') }}"
     # - name: Debug instance private IPs
     #   debug:
     #     var: instances

@@ -1,0 +1,68 @@
+---
+- name: Create K8s Networking
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Subnet
+      register: k8s_subnet
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ oci_compartment_id }}"
+        cidr_block: "{{ k8s_cidr }}"
+        vcn_id: "{{ vcn_id }}"
+        display_name: "{{ subnet_display_name }}"
+        dns_label: "{{ subnet_dns_label }}"
+        freeform_tags:
+          deployment: ansible
+        prohibit_internet_ingress: true
+        prohibit_public_ip_on_vnic: true
+        route_table_id: "{{ route_table_id }}"
+        security_list_ids: ["{{ security_list_id }}"]
+    - name: Debug Subnet ID
+      debug:
+        var: k8s_subnet.subnet.id
+
+- name: Create K8s Cluster
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create cluster
+      register: k8s_cluster
+      oracle.oci.oci_container_engine_cluster:
+        name: "{{ cluster_name }}"
+        compartment_id: "{{ oci_compartment_id }}"
+        vcn_id: "{{ vcn_id }}"
+        kubernetes_version: "{{ kubernetes_version }}"
+        endpoint_config:
+          subnet_id: "{{ k8s_subnet.subnet.id }}"
+          is_public_ip_enabled: false
+        options:
+          service_lb_subnet_ids: ["{{ public_subnet_id }}"]
+        image_policy_config:
+          is_policy_enabled: false
+    - name: Debug Cluster
+      debug:
+        var: k8s_cluster.cluster.id
+    - name: Create node pool
+      register: node_pool
+      oracle.oci.oci_container_engine_node_pool:
+        # required
+        compartment_id: "{{ oci_compartment_id }}"
+        cluster_id: "{{ k8s_cluster.cluster.id }}"
+        name: "{{ node_pool_name }}"
+        kubernetes_version: "{{ kubernetes_version }}"
+        node_shape: "{{ node_shape }}"
+        node_image_name: "{{ node_image_name }}"
+        node_source_details:
+          source_type: IMAGE
+          image_id: "{{ image_id }}"
+          boot_volume_size_in_gbs: "{{ boot_volume_size }}"
+        node_shape_config:
+          # optional
+          ocpus: "{{ node_shape_ocpu }}"
+          memory_in_gbs: "{{ node_shape_mem }}"
+        ssh_public_key: "{{ ssh_pub_key }}"
+        node_config_details:
+          size: 1
+          placement_configs:
+            - availability_domain: "crPE:US-ASHBURN-AD-1"
+              subnet_id: "{{ k8s_subnet.subnet.id }}"

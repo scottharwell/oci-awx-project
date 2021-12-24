@@ -6,21 +6,17 @@
   tasks:
     - name: Get OCI Compute Instance Facts
       oracle.oci.oci_compute_instance_facts:
-        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
       register: compute_facts
     - name: Get machine OCIDs
       set_fact:
-        ocids: "{{ compute_facts | json_query('instances[?lifecycle_state !=`STOPPED` && !(shape|contains(@,`A1`)) && freeform_tags.os ==`rhel8`].id') }}"
+        ocids: "{{ compute_facts | json_query('instances[?lifecycle_state !=`STOPPED` && lifecycle_state !=`TERMINATED` && !(shape|contains(@,`A1`)) && freeform_tags.os ==`rhel8`].id') }}"
     - name: "Found OCIDs"
       debug:
         var: ocids
       when: (ocids is defined) and (ocids | length > 0)
     - oracle.oci.oci_compute_instance_actions:
-        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
         instance_id: "{{ item }}"
         action: softstop
       with_items: "{{ ocids }}"

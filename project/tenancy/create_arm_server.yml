@@ -7,11 +7,8 @@
     - name: Create instance
       register: created_instance
       oracle.oci.oci_compute_instance:
-        config_file_location: "{{ lookup('env', 'OCI_CONFIG_FILE') }}"
-        config_profile_name: "{{ lookup('env', 'OCI_PROFILE') }}"
-
         display_name: "{{ server_name }}"
-        compartment_id: "{{ lookup('env', 'OCI_COMPARTMENT_ID') }}"
+        compartment_id: "{{ oci_compartment_id }}"
         availability_domain: "{{ availability_domain }}"
         fault_domain: "{{ fault_domain }}"
         shape: "{{ vm_shape }}"
@@ -29,8 +26,8 @@
           source_type: "image"
           image_id: "{{ oracle_linux_8_arm_ocid }}"
         create_vnic_details:
-          assign_public_ip: true
-          subnet_id: "{{ public_subnet_id }}"
+          assign_public_ip: "{{ assign_public_ip }}"
+          subnet_id: "{{ oci_subnet_id }}"
         freeform_tags:
           deployment: "ansible"
     - name: Instance Details

@@ -1,0 +1,262 @@
+---
+- name: Create VCN(s)
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create VCN
+      oracle.oci.oci_network_vcn:
+        compartment_id: "{{ oci_tenancy_id }}"
+        cidr_block: "{{ oci_root_tenancy_vcn_cidr }}"
+        display_name: "{{ oci_root_vcn_display_name }}"
+        dns_label: datainsights
+        is_ipv6_enabled: false
+        freeform_tags:
+          deployment: ansible
+      register: oci_vcn
+    - name: Debug VCN
+      debug:
+        var: oci_vcn.vcn.id
+
+- name: Create Security Lists
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Web and SSH Security List
+      register: public_security_list
+      oracle.oci.oci_network_security_list:
+        display_name: Allow Public HTTP(S) and SSH
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        egress_security_rules:
+          - destination: "0.0.0.0/0"
+            protocol: all
+            is_stateless: false
+        ingress_security_rules:
+          # Allow SSH
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 22
+                min: 22
+          # Allow HTTP
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 80
+                min: 80
+          # Allow HTTPS
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 443
+                min: 443
+          # Allow External Pings
+          - protocol: "{{ oci_vcn_icmp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            icmp_options:
+              type: 3
+              code: 4
+          # Allow Internal Pings
+          - protocol: "{{ oci_vcn_icmp_protocol }}"
+            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            icmp_options:
+              type: 3
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Public Security List ID
+      debug:
+        var: public_security_list.security_list.id
+    - name: Create Web Security List
+      register: web_security_list
+      oracle.oci.oci_network_security_list:
+        display_name: Allow Public HTTP(S)
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        egress_security_rules:
+          - destination: "0.0.0.0/0"
+            protocol: all
+            is_stateless: false
+        ingress_security_rules:
+          # Allow HTTP
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 80
+                min: 80
+          # Allow HTTPS
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 443
+                min: 443
+          # Allow Internal Pings
+          - protocol: "{{ oci_vcn_icmp_protocol }}"
+            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            icmp_options:
+              type: 3
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Web Security List ID
+      debug:
+        var: web_security_list.security_list.id
+    - name: Create Private Security List
+      register: private_security_list
+      oracle.oci.oci_network_security_list:
+        display_name: Internal Traffic
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        egress_security_rules:
+          - destination: "0.0.0.0/0"
+            protocol: all
+            is_stateless: false
+        ingress_security_rules:
+          # Allow SSH
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 22
+                min: 22
+          # Allow Internal Pings
+          - protocol: "{{ oci_vcn_icmp_protocol }}"
+            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Private Security List ID
+      debug:
+        var: private_security_list.security_list.id
+
+- name: Create Internet Gateway
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Internet Gateway for public facing networks
+      register: internet_gateway
+      oracle.oci.oci_network_internet_gateway:
+        compartment_id: "{{ oci_tenancy_id }}"
+        is_enabled: true
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        display_name: Public Internet Gateway
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Internet Gateway ID
+      debug:
+        var: internet_gateway.internet_gateway.id
+
+- name: Create NAT Gateway
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create NAT Gateway for internal networks
+      register: nat_gateway
+      oracle.oci.oci_network_nat_gateway:
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        display_name: NAT Gateway
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Internet Gateway ID
+      debug:
+        var: nat_gateway.nat_gateway.id
+
+- name: Create Route Tables
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Internet Gateway Route Table
+      register: igw_route_table
+      oracle.oci.oci_network_route_table:
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        display_name: Public Networks Route Table
+        route_rules:
+          - network_entity_id: "{{ internet_gateway.internet_gateway.id }}"
+            destination: "0.0.0.0/0"
+            destination_type: CIDR_BLOCK
+            description: Internet Traffic
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Internet Gateway Route Table ID
+      debug:
+        var: igw_route_table.route_table.id
+    - name: NAT Gateway Route Table
+      register: natgw_route_table
+      oracle.oci.oci_network_route_table:
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        display_name: Private Networks Route Table
+        route_rules:
+          - network_entity_id: "{{ nat_gateway.nat_gateway.id }}"
+            destination: "0.0.0.0/0"
+            destination_type: CIDR_BLOCK
+            description: Internet Traffic
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Internet Gateway Route Table ID
+      debug:
+        var: natgw_route_table.route_table.id
+
+# THE OCI PYTHON LIBRARY SEEMS TO BE BROKEN RIGHT NOW WITH SUBNETS
+- name: Configure Standard Subnets
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Public Subnet
+      register: public_subnet
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        cidr_block: "{{ oci_root_tenancy_public_subnet_cidr }}"
+        display_name: "General Public Subnet"
+        dns_label: public
+        freeform_tags:
+          deployment: ansible
+        prohibit_internet_ingress: false
+        prohibit_public_ip_on_vnic: false
+        route_table_id: "{{ igw_route_table.route_table.id }}"
+        security_list_ids: ["{{ public_security_list.security_list.id }}"]
+    - name: Debug Public Subnet ID
+      debug:
+        var: public_subnet.subnet.id
+    - name: Create Private Subnet
+      register: private_subnet
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ oci_tenancy_id }}"
+        cidr_block: "{{ oci_root_tenancy_private_subnet_cidr }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        display_name: "General Private Subnet"
+        dns_label: private
+        freeform_tags:
+          deployment: ansible
+        prohibit_internet_ingress: true
+        prohibit_public_ip_on_vnic: true
+        route_table_id: "{{ natgw_route_table.route_table.id }}"
+        security_list_ids: ["{{ private_security_list.security_list.id }}"]
+    - name: Debug Private Subnet ID
+      debug:
+        var: private_subnet.subnet.id
