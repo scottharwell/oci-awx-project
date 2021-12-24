@@ -42,7 +42,7 @@ ansible-navigator run project/create_bastion_sessions.yml \
 --pae false \
 --extra-vars "@env/extravars" \
 --mode stdout \
---eei docker-registry.gso.harwell.me/scottharwell/oci-execution-env:latest \
+--eei quay.io/scottharwell/oci-execution-env:latest \
 --eev $HOME/.oci:/home/runner/.oci \
 --senv OCI_CONFIG_FILE="~/.oci/config" \
 --senv OCI_PROFILE="REPLACE WITH YOUR OCI PROFILE...i.e. DEFAULT" \
