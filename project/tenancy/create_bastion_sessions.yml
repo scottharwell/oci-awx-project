@@ -19,7 +19,7 @@
     #     var: bastion_facts
     - name: Get Ansible bastion OCID
       set_fact:
-        bastion_ocid: "{{ bastion_facts | json_query('bastions[?lifecycle_state==`ACTIVE` && freeform_tags.deployment==`ansible`].id | [0]') }}"
+        bastion_ocid: "{{ bastion_facts | json_query('bastions[?lifecycle_state==`ACTIVE`].id | [0]') }}"
         cacheable: false
     # - name: Debug Bastion OCID
     #   debug:
