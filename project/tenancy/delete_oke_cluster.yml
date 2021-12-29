@@ -39,6 +39,29 @@
         compartment_id: "{{ compartment.id }}"
         state: absent
       with_items: "{{ cluster_facts.clusters }}"
+
+- name: Delete Bastion
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get Bastion Facts
+      oracle.oci.oci_bastion_facts:
+        compartment_id: "{{ compartment.id }}"
+      register: bastion_facts
+    - name: Debug Bastion Facts
+      debug:
+        msg: "Bastion ID: {{ item.id }}"
+      with_items: "{{ bastion_facts.bastions }}"
+    - name: Delete Bastions
+      oracle.oci.oci_bastion:
+        id: "{{ item.id }}"
+        compartment_id: "{{ compartment.id }}"
+        state: absent
+
+- name: Delete VCN
+  hosts: localhost
+  gather_facts: false
+  tasks:
     - name: Get Subnet Facts
       oracle.oci.oci_network_subnet_facts:
         compartment_id: "{{ compartment.id }}"
@@ -159,6 +182,11 @@
         id: "{{ cluster.vcn_id }}"
         compartment_id: "{{ compartment.id }}"
         state: absent
+
+- name: Delete Cluster Compartment
+  hosts: localhost
+  gather_facts: false
+  tasks:
     - name: Delete Compartment
       oracle.oci.oci_identity_compartment:
         id: "{{ compartment.id }}"
