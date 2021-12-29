@@ -1,25 +1,360 @@
 ---
+- name: Create Compartment
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create compartment for cluster
+      register: created_compartment
+      oracle.oci.oci_identity_compartment:
+        parent_compartment_id: "{{ oci_tenancy_id }}"
+        name: "{{ compartment_name }}"
+        description: "{{ compartment_description }}"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+      when: compartment_name is defined
+    - name: Debug Compartment id
+      debug:
+        var: created_compartment.compartment.id
+
 - name: Create K8s Networking
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Create Subnet
-      register: k8s_subnet
-      oracle.oci.oci_network_subnet:
-        compartment_id: "{{ oci_compartment_id }}"
-        cidr_block: "{{ k8s_cidr }}"
-        vcn_id: "{{ vcn_id }}"
-        display_name: "{{ subnet_display_name }}"
-        dns_label: "{{ subnet_dns_label }}"
+    - name: Create VCN
+      oracle.oci.oci_network_vcn:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        cidr_block: "{{ k8s_network_cidr }}"
+        display_name: "{{ deployment_name }} VCN"
+        dns_label: "{{ deployment_name | lower }}"
         freeform_tags:
           deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+        is_ipv6_enabled: false
+      register: created_vcn
+    - name: Debug VCN Facts
+      debug:
+        var: created_vcn.vcn.id
+    - name: Create Controller Subnet Security List
+      register: controller_security_list
+      oracle.oci.oci_network_security_list:
+        display_name: "{{ deployment_name }} Controller Security List"
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        egress_security_rules:
+          - destination: "{{ servicegw_dest_cidr }}"
+            destination_type: SERVICE_CIDR_BLOCK
+            protocol: "{{ oci_vcn_tcp_protocol }}"
+            is_stateless: false
+            tcp_options:
+              destination_port_range:
+                max: 443
+                min: 443
+          - destination: "{{ k8s_worker_cidr }}"
+            protocol: all
+            is_stateless: false
+          - destination: "{{ k8s_worker_cidr }}"
+            protocol: "{{ oci_vcn_icmp_protocol }}"
+            is_stateless: false
+            icmp_options:
+              type: 3
+              code: 4
+        ingress_security_rules:
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ k8s_worker_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 6443
+                min: 6443
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 6443
+                min: 6443
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ k8s_worker_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 12250
+                min: 12250
+          # Pings
+          - protocol: "{{ oci_vcn_icmp_protocol }}"
+            source: "{{ k8s_worker_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            icmp_options:
+              type: 3
+              code: 4
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug Controller Security List ID
+      debug:
+        var: controller_security_list.security_list.id
+    - name: Create Worker Security List
+      register: worker_security_list
+      oracle.oci.oci_network_security_list:
+        display_name: "{{ deployment_name }} Worker Security List"
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        egress_security_rules:
+          - destination: "0.0.0.0/0"
+            protocol: all
+            is_stateless: false
+          - destination: "{{ k8s_controller_cidr }}"
+            protocol: "{{ oci_vcn_tcp_protocol }}"
+            is_stateless: false
+            tcp_options:
+              destination_port_range:
+                max: 6443
+                min: 6443
+          - destination: "{{ k8s_controller_cidr }}"
+            protocol: "{{ oci_vcn_tcp_protocol }}"
+            is_stateless: false
+            tcp_options:
+              destination_port_range:
+                max: 12250
+                min: 12250
+          - destination: "{{ k8s_controller_cidr }}"
+            protocol: "{{ oci_vcn_icmp_protocol }}"
+            is_stateless: false
+            icmp_options:
+              type: 3
+              code: 4
+          - destination: "{{ servicegw_dest_cidr }}"
+            destination_type: SERVICE_CIDR_BLOCK
+            protocol: "{{ oci_vcn_tcp_protocol }}"
+            is_stateless: false
+            tcp_options:
+              destination_port_range:
+                max: 443
+                min: 443
+          - destination: "0.0.0.0/0"
+            protocol: "{{ oci_vcn_icmp_protocol }}"
+            is_stateless: false
+            icmp_options:
+              type: 3
+              code: 4
+        ingress_security_rules:
+          - protocol: all
+            source: "{{ k8s_lb_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ local_subnet_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 22
+                min: 22
+          - protocol: all
+            source: "{{ k8s_controller_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+          # Allow internal SSH to worker nodes
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ bastion_subnet_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 22
+                min: 22
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ local_subnet_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 22
+                min: 22
+          # Pings
+          - protocol: "{{ oci_vcn_icmp_protocol }}"
+            source: "{{ k8s_network_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            icmp_options:
+              type: 3
+              code: 4
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug Worker Security List ID
+      debug:
+        var: worker_security_list.security_list.id
+    - name: Create Load Balancer Security List
+      register: lb_security_list
+      oracle.oci.oci_network_security_list:
+        display_name: "{{ deployment_name }} LB Security List"
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        egress_security_rules:
+          - destination: "0.0.0.0/0"
+            protocol: all
+            is_stateless: false
+        ingress_security_rules:
+          # Allow Web Traffic
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ created_vcn.vcn.cidr_block }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 80
+                min: 80
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "{{ created_vcn.vcn.cidr_block  }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 443
+                min: 443
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug Load Balancer Security List ID
+      debug:
+        var: lb_security_list.security_list.id
+    - name: Create Internet Gateway
+      register: created_igw
+      oracle.oci.oci_network_internet_gateway:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        is_enabled: true
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        display_name: "{{ deployment_name }} IGW"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug Internet Gateway ID
+      debug:
+        var: created_igw.internet_gateway.id
+    - name: Create NAT Gateway
+      register: created_natgw
+      oracle.oci.oci_network_nat_gateway:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        display_name: "{{ deployment_name }} NAT GW"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug NAT Gateway ID
+      debug:
+        var: created_natgw.nat_gateway.id
+    - name: Create Service Gateway
+      register: created_servicegw
+      oracle.oci.oci_network_service_gateway:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        services:
+          - service_id: "{{ servicegw_dest_id }}"
+        display_name: "{{ deployment_name }} Service GW"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug Service Gateway ID
+      debug:
+        var: created_servicegw.service_gateway.id
+    - name: Public Network Route Table
+      register: public_route_table
+      oracle.oci.oci_network_route_table:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        display_name: "{{ deployment_name }} Public Network Route Table"
+        route_rules:
+          - network_entity_id: "{{ created_igw.internet_gateway.id }}"
+            destination: "0.0.0.0/0"
+            destination_type: CIDR_BLOCK
+            description: Internet Traffic
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug Public Network Route Table ID
+      debug:
+        var: public_route_table.route_table.id
+    - name: Private Route Table
+      register: natgw_route_table
+      oracle.oci.oci_network_route_table:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        display_name: "{{ deployment_name }} Private Networks Route Table"
+        route_rules:
+          - network_entity_id: "{{ created_natgw.nat_gateway.id }}"
+            destination: "0.0.0.0/0"
+            destination_type: CIDR_BLOCK
+            description: Internet Traffic
+          - network_entity_id: "{{ created_servicegw.service_gateway.id }}"
+            destination: "{{ servicegw_dest_cidr }}"
+            destination_type: SERVICE_CIDR_BLOCK
+            description: OCI Services Traffic
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+    - name: Debug NAT Gateway Route Table ID
+      debug:
+        var: natgw_route_table.route_table.id
+    - name: Create LB Subnet
+      register: lb_subnet
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        cidr_block: "{{ k8s_lb_cidr }}"
+        display_name: "{{ deployment_name }} Load Balancer Public Subnet"
+        dns_label: "{{ deployment_name | lower }}public"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+        prohibit_internet_ingress: false
+        prohibit_public_ip_on_vnic: false
+        route_table_id: "{{ public_route_table.route_table.id }}"
+        security_list_ids: ["{{ lb_security_list.security_list.id }}"]
+    - name: Debug LB Subnet ID
+      debug:
+        var: lb_subnet.subnet.id
+    - name: Create Worker Subnet
+      register: worker_subnet
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        cidr_block: "{{ k8s_worker_cidr }}"
+        display_name: "{{ deployment_name }} Worker Subnet"
+        dns_label: "{{ deployment_name | lower }}worker"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
         prohibit_internet_ingress: true
         prohibit_public_ip_on_vnic: true
-        route_table_id: "{{ route_table_id }}"
-        security_list_ids: ["{{ security_list_id }}"]
-    - name: Debug Subnet ID
+        route_table_id: "{{ natgw_route_table.route_table.id }}"
+        security_list_ids: ["{{ worker_security_list.security_list.id }}"]
+    - name: Debug Worker Subnet ID
       debug:
-        var: k8s_subnet.subnet.id
+        var: worker_subnet.subnet.id
+    - name: Create Controller Subnet
+      register: controller_subnet
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
+        cidr_block: "{{ k8s_controller_cidr }}"
+        display_name: "{{ deployment_name }} Controller Subnet"
+        dns_label: "{{ deployment_name | lower }}controller"
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
+        prohibit_internet_ingress: false
+        prohibit_public_ip_on_vnic: false
+        route_table_id: "{{ public_route_table.route_table.id }}"
+        security_list_ids: ["{{ controller_security_list.security_list.id }}"]
+    - name: Debug Controller Subnet ID
+      debug:
+        var: controller_subnet.subnet.id
 
 - name: Create K8s Cluster
   hosts: localhost
@@ -28,15 +363,15 @@
     - name: Create cluster
       register: k8s_cluster
       oracle.oci.oci_container_engine_cluster:
-        name: "{{ cluster_name }}"
-        compartment_id: "{{ oci_compartment_id }}"
-        vcn_id: "{{ vcn_id }}"
+        name: "{{ deployment_name }}"
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        vcn_id: "{{ created_vcn.vcn.id }}"
         kubernetes_version: "{{ kubernetes_version }}"
         endpoint_config:
-          subnet_id: "{{ k8s_subnet.subnet.id }}"
-          is_public_ip_enabled: false
+          subnet_id: "{{ controller_subnet.subnet.id }}"
+          is_public_ip_enabled: true
         options:
-          service_lb_subnet_ids: ["{{ public_subnet_id }}"]
+          service_lb_subnet_ids: ["{{ lb_subnet.subnet.id }}"]
         image_policy_config:
           is_policy_enabled: false
     - name: Debug Cluster
@@ -45,10 +380,9 @@
     - name: Create node pool
       register: node_pool
       oracle.oci.oci_container_engine_node_pool:
-        # required
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ created_compartment.compartment.id }}"
         cluster_id: "{{ k8s_cluster.cluster.id }}"
-        name: "{{ node_pool_name }}"
+        name: "{{ deployment_name }} Node Pool"
         kubernetes_version: "{{ kubernetes_version }}"
         node_shape: "{{ node_shape }}"
         node_image_name: "{{ node_image_name }}"
@@ -57,12 +391,15 @@
           image_id: "{{ image_id }}"
           boot_volume_size_in_gbs: "{{ boot_volume_size }}"
         node_shape_config:
-          # optional
           ocpus: "{{ node_shape_ocpu }}"
           memory_in_gbs: "{{ node_shape_mem }}"
         ssh_public_key: "{{ ssh_pub_key }}"
         node_config_details:
-          size: 1
+          size: "{{ node_count }}"
           placement_configs:
             - availability_domain: "crPE:US-ASHBURN-AD-1"
-              subnet_id: "{{ k8s_subnet.subnet.id }}"
+              subnet_id: "{{ worker_subnet.subnet.id }}"
+            - availability_domain: "crPE:US-ASHBURN-AD-2"
+              subnet_id: "{{ worker_subnet.subnet.id }}"
+            - availability_domain: "crPE:US-ASHBURN-AD-3"
+              subnet_id: "{{ worker_subnet.subnet.id }}"

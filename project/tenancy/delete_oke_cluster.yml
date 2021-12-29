@@ -1,0 +1,22 @@
+---
+- name: Delete K8s Cluster
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Delete Cluster
+      oracle.oci.oci_container_engine_cluster:
+        id: "{{ k8s_cluster_id }}"
+        compartment_id: "{{ compartment_id }}"
+        state: absent
+      when: k8s_cluster_id is defined
+    - name: Delete VCN
+      oracle.oci.oci_network_vcn:
+        id: "{{ vcn_id }}"
+        compartment_id: "{{ compartment_id }}"
+        state: absent
+      when: vcn_id is defined
+    - name: Delete Compartment
+      oracle.oci.oci_identity_compartment:
+        id: "{{ compartment_id }}"
+        state: absent
+      when: compartment_id is defined
