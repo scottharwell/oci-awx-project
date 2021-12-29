@@ -203,7 +203,7 @@
         ingress_security_rules:
           # Allow Web Traffic
           - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ created_vcn.vcn.cidr_block }}"
+            source: "0.0.0.0/0"
             is_stateless: false
             source_type: CIDR_BLOCK
             tcp_options:
@@ -211,7 +211,7 @@
                 max: 80
                 min: 80
           - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ created_vcn.vcn.cidr_block  }}"
+            source: "0.0.0.0/0"
             is_stateless: false
             source_type: CIDR_BLOCK
             tcp_options:
