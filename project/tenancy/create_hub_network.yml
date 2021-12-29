@@ -6,8 +6,8 @@
     - name: Create VCN
       oracle.oci.oci_network_vcn:
         compartment_id: "{{ oci_tenancy_id }}"
-        cidr_block: "{{ oci_root_tenancy_vcn_cidr }}"
-        display_name: "{{ oci_root_vcn_display_name }}"
+        cidr_block: "{{ oci_hub_vcn_cidr }}"
+        display_name: "{{ oci_hub_vcn_display_name }}"
         dns_label: datainsights
         is_ipv6_enabled: false
         freeform_tags:
@@ -69,7 +69,7 @@
               code: 4
           # Allow Internal Pings
           - protocol: "{{ oci_vcn_icmp_protocol }}"
-            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            source: "{{ oci_hub_vcn_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
             icmp_options:
@@ -110,7 +110,7 @@
                 min: 443
           # Allow Internal Pings
           - protocol: "{{ oci_vcn_icmp_protocol }}"
-            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            source: "{{ oci_hub_vcn_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
             icmp_options:
@@ -133,7 +133,7 @@
         ingress_security_rules:
           # Allow SSH
           - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            source: "{{ oci_hub_vcn_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
             tcp_options:
@@ -142,7 +142,7 @@
                 min: 22
           # Allow Internal Pings
           - protocol: "{{ oci_vcn_icmp_protocol }}"
-            source: "{{ oci_root_tenancy_vcn_cidr }}"
+            source: "{{ oci_hub_vcn_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
         freeform_tags:
@@ -180,9 +180,25 @@
         display_name: NAT Gateway
         freeform_tags:
           deployment: ansible
-    - name: Debug Internet Gateway ID
+    - name: Debug NAT Gateway ID
       debug:
         var: nat_gateway.nat_gateway.id
+
+- name: Create Peering Gateway
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create Peering Gateway
+      register: peergw_gateway
+      oracle.oci.oci_network_local_peering_gateway:
+        compartment_id: "{{ oci_tenancy_id }}"
+        vcn_id: "{{ oci_vcn.vcn.id }}"
+        display_name: Hub Peering GW
+        freeform_tags:
+          deployment: ansible
+    - name: Debug Peering Gateway ID
+      debug:
+        var: peergw_gateway.nat_gateway.id
 
 - name: Create Route Tables
   hosts: localhost
@@ -217,11 +233,10 @@
             description: Internet Traffic
         freeform_tags:
           deployment: ansible
-    - name: Debug Internet Gateway Route Table ID
+    - name: Debug NAT Gateway Route Table ID
       debug:
         var: natgw_route_table.route_table.id
 
-# THE OCI PYTHON LIBRARY SEEMS TO BE BROKEN RIGHT NOW WITH SUBNETS
 - name: Configure Standard Subnets
   hosts: localhost
   gather_facts: false
@@ -231,7 +246,7 @@
       oracle.oci.oci_network_subnet:
         compartment_id: "{{ oci_tenancy_id }}"
         vcn_id: "{{ oci_vcn.vcn.id }}"
-        cidr_block: "{{ oci_root_tenancy_public_subnet_cidr }}"
+        cidr_block: "{{ oci_hub_vcn_public_subnet_cidr }}"
         display_name: "General Public Subnet"
         dns_label: public
         freeform_tags:
@@ -247,7 +262,7 @@
       register: private_subnet
       oracle.oci.oci_network_subnet:
         compartment_id: "{{ oci_tenancy_id }}"
-        cidr_block: "{{ oci_root_tenancy_private_subnet_cidr }}"
+        cidr_block: "{{ oci_hub_vcn_private_subnet_cidr }}"
         vcn_id: "{{ oci_vcn.vcn.id }}"
         display_name: "General Private Subnet"
         dns_label: private
