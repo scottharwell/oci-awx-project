@@ -3,20 +3,163 @@
   hosts: localhost
   gather_facts: false
   tasks:
+    - name: Get Compartment Facts
+      oracle.oci.oci_identity_compartment_facts:
+        id: "{{ compartment_id }}"
+      register: compartment_facts
+    - name: Get Compartment
+      set_fact:
+        compartment: "{{ compartment_facts.compartments[0] }}"
+    - name: Debug Compartment Details
+      debug:
+        msg:
+          - "Compartment ID: {{ compartment.id }}"
+          - "Compartment Name: {{ compartment.name }}"
+          - "Compartment Lifecycle State: {{ compartment.lifecycle_state }}"
+    - name: Get Compartment Cluster Facts
+      oracle.oci.oci_container_engine_cluster_facts:
+        compartment_id: "{{ compartment.id }}"
+      register: cluster_facts
+    - name: Fail if there are no clusters
+      fail:
+        msg: There are no clusters in this compartment
+      when: (cluster_facts.clusters | length < 1)
+    - name: Set cluster fact
+      set_fact:
+        cluster: "{{ cluster_facts.clusters[0] }}"
+    - name: Debug Compartment Cluster Facts
+      debug:
+        msg:
+          - "Cluster ID: {{ cluster.id }}"
+          - "Cluster Name: {{ cluster.name }}"
+          - "Cluster VCN: {{ cluster.vcn_id }}"
     - name: Delete Cluster
       oracle.oci.oci_container_engine_cluster:
-        id: "{{ k8s_cluster_id }}"
-        compartment_id: "{{ compartment_id }}"
+        id: "{{ item.id }}"
+        compartment_id: "{{ compartment.id }}"
         state: absent
-      when: k8s_cluster_id is defined
+      with_items: "{{ cluster_facts.clusters }}"
+    - name: Get Subnet Facts
+      oracle.oci.oci_network_subnet_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: subnet_facts
+    - name: Debug Subnet Facts
+      debug:
+        msg:
+          - "Subnet ID: {{ item.id }}"
+          - "Subnet CIDR: {{ item.cidr_block }}"
+      with_items: "{{ subnet_facts.subnets }}"
+    - name: Delete Subnets
+      oracle.oci.oci_network_subnet:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ subnet_facts.subnets }}"
+    - name: Get Route Table Facts
+      oracle.oci.oci_network_route_table_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: route_table_facts
+    - name: Debug Route Table Facts
+      debug:
+        msg:
+          - "Route Table ID: {{ item.id }}"
+      with_items: "{{ route_table_facts.route_tables }}"
+    - name: Delete Route Tables
+      oracle.oci.oci_network_route_table:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ route_table_facts.route_tables"
+      ignore_errors: true
+    - name: Get IGW Facts
+      oracle.oci.oci_network_internet_gateway_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: internet_gateway_facts
+    - name: Debug IGW Facts
+      debug:
+        msg:
+          - "IGW ID: {{ item.id }}"
+      with_items: "{{ internet_gateway_facts.internet_gateways }}"
+    - name: Delete IGW
+      oracle.oci.oci_network_internet_gateway:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ internet_gateway_facts.internet_gateways }}"
+    - name: Get NATGW Facts
+      oracle.oci.oci_network_nat_gateway_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: nat_gateway_facts
+    - name: Debug NATGW Facts
+      debug:
+        msg:
+          - "NATGW ID: {{ item.id }}"
+      with_items: "{{ nat_gateway_facts.nat_gateways }}"
+    - name: Delete NATGW
+      oracle.oci.oci_network_nat_gateway:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ nat_gateway_facts.nat_gateways }}"
+    - name: Get Service GW Facts
+      oracle.oci.oci_network_service_gateway_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: service_gateway_facts
+    - name: Debug Service GW Facts
+      debug:
+        msg:
+          - "Service GW ID: {{ item.id }}"
+      with_items: "{{ service_gateway_facts.service_gateways }}"
+    - name: Delete NATGW
+      oracle.oci.oci_network_service_gateway:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ service_gateway_facts.service_gateways }}"
+    - name: Get LPGW Facts
+      oracle.oci.oci_network_local_peering_gateway_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: lp_gateway_facts
+    - name: Debug LPGW Facts
+      debug:
+        msg:
+          - "LPGW ID: {{ item.id }}"
+      with_items: "{{ lp_gateway_facts.local_peering_gateways }}"
+    - name: Delete LPGW
+      oracle.oci.oci_network_local_peering_gateway:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ lp_gateway_facts.local_peering_gateways }}"
+    - name: Get Security Lists Facts
+      oracle.oci.oci_network_security_list_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: security_list_facts
+    - name: Debug Security Lists Facts
+      debug:
+        msg:
+          - "Security List ID: {{ item.id }}"
+      with_items: "{{ security_list_facts.security_lists }}"
+    - name: Delete Security List
+      oracle.oci.oci_network_security_list:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ security_list_facts.security_lists }}"
+      ignore_errors: true
     - name: Delete VCN
       oracle.oci.oci_network_vcn:
-        id: "{{ vcn_id }}"
-        compartment_id: "{{ compartment_id }}"
+        id: "{{ cluster.vcn_id }}"
+        compartment_id: "{{ compartment.id }}"
         state: absent
-      when: vcn_id is defined
     - name: Delete Compartment
       oracle.oci.oci_identity_compartment:
-        id: "{{ compartment_id }}"
+        id: "{{ compartment.id }}"
         state: absent
-      when: compartment_id is defined
