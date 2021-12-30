@@ -10,6 +10,10 @@
     - name: Get Compartment
       set_fact:
         compartment: "{{ compartment_facts.compartments[0] }}"
+    - name: Fail if compartment is not active
+      fail:
+        msg: The compartment is not active
+      when: compartment_facts.compartments[0].lifecycle_state != 'ACTIVE'
     - name: Debug Compartment Details
       debug:
         msg:
@@ -40,7 +44,7 @@
         state: absent
       with_items: "{{ cluster_facts.clusters }}"
 
-- name: Delete Bastion
+- name: Delete Bastions
   hosts: localhost
   gather_facts: false
   tasks:
@@ -52,11 +56,14 @@
       debug:
         msg: "Bastion ID: {{ item.id }}"
       with_items: "{{ bastion_facts.bastions }}"
+      when: bastion_facts is succeeded and (bastion_facts.bastions | length > 0)
     - name: Delete Bastions
       oracle.oci.oci_bastion:
         id: "{{ item.id }}"
         compartment_id: "{{ compartment.id }}"
         state: absent
+      with_items: "{{ bastion_facts.bastions }}"
+      when: bastion_facts is succeeded and (bastion_facts.bastions | length > 0)
 
 - name: Delete VCN
   hosts: localhost
@@ -94,7 +101,7 @@
         compartment_id: "{{ compartment.id }}"
         id: "{{ item.id }}"
         state: absent
-      with_items: "{{ route_table_facts.route_tables"
+      with_items: "{{ route_table_facts.route_tables }}"
       ignore_errors: true
     - name: Get IGW Facts
       oracle.oci.oci_network_internet_gateway_facts:
@@ -177,6 +184,22 @@
         state: absent
       with_items: "{{ security_list_facts.security_lists }}"
       ignore_errors: true
+    - name: Get DRG Attachment Facts
+      oracle.oci.oci_network_drg_attachment_facts:
+        compartment_id: "{{ compartment.id }}"
+        vcn_id: "{{ cluster.vcn_id }}"
+      register: drg_attachment_facts
+    - name: Debug DRG Attachment Facts
+      debug:
+        msg:
+          - "DRG Attachment ID: {{ item.id }}"
+      with_items: "{{ drg_attachment_facts.drg_attachments }}"
+    - name: Delete DRG Attachments
+      oracle.oci.oci_network_drg_attachment:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ drg_attachment_facts.drg_attachments }}"
     - name: Delete VCN
       oracle.oci.oci_network_vcn:
         id: "{{ cluster.vcn_id }}"
