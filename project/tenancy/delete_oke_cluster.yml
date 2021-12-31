@@ -116,6 +116,13 @@
         msg:
           - "Route Table ID: {{ item.id }}"
       with_items: "{{ route_table_facts.route_tables }}"
+    - name: Purge Route Table Rules
+      oracle.oci.oci_network_route_table:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        purge_route_rules: true
+        route_rules: []
+      with_items: "{{ route_table_facts.route_tables }}"
     - name: Delete Route Tables
       oracle.oci.oci_network_route_table:
         compartment_id: "{{ compartment.id }}"
@@ -139,6 +146,7 @@
         id: "{{ item.id }}"
         state: absent
       with_items: "{{ internet_gateway_facts.internet_gateways }}"
+      ignore_errors: true
     - name: Get NATGW Facts
       oracle.oci.oci_network_nat_gateway_facts:
         compartment_id: "{{ compartment.id }}"
@@ -155,6 +163,7 @@
         id: "{{ item.id }}"
         state: absent
       with_items: "{{ nat_gateway_facts.nat_gateways }}"
+      ignore_errors: true
     - name: Get Service GW Facts
       oracle.oci.oci_network_service_gateway_facts:
         compartment_id: "{{ compartment.id }}"
@@ -165,12 +174,13 @@
         msg:
           - "Service GW ID: {{ item.id }}"
       with_items: "{{ service_gateway_facts.service_gateways }}"
-    - name: Delete NATGW
+    - name: Delete Service GW
       oracle.oci.oci_network_service_gateway:
         compartment_id: "{{ compartment.id }}"
         id: "{{ item.id }}"
         state: absent
       with_items: "{{ service_gateway_facts.service_gateways }}"
+      ignore_errors: true
     - name: Get LPGW Facts
       oracle.oci.oci_network_local_peering_gateway_facts:
         compartment_id: "{{ compartment.id }}"
@@ -187,6 +197,7 @@
         id: "{{ item.id }}"
         state: absent
       with_items: "{{ lp_gateway_facts.local_peering_gateways }}"
+      ignore_errors: true
     - name: Get Security Lists Facts
       oracle.oci.oci_network_security_list_facts:
         compartment_id: "{{ compartment.id }}"
@@ -220,6 +231,7 @@
         id: "{{ item.id }}"
         state: absent
       with_items: "{{ drg_attachment_facts.drg_attachments }}"
+      ignore_errors: true
     - name: Delete VCN
       oracle.oci.oci_network_vcn:
         id: "{{ cluster.vcn_id }}"
