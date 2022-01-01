@@ -65,6 +65,14 @@
               code: 4
         ingress_security_rules:
           - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 6443
+                min: 6443
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
             source: "{{ k8s_worker_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -101,7 +109,7 @@
         compartment_id: "{{ created_compartment.compartment.id }}"
         vcn_id: "{{ created_vcn.vcn.id }}"
         egress_security_rules:
-          - destination: "0.0.0.0/0"
+          - destination: "{{ k8s_worker_cidr }}"
             protocol: all
             is_stateless: false
           - destination: "{{ k8s_controller_cidr }}"
@@ -138,68 +146,33 @@
             icmp_options:
               type: 3
               code: 4
+          - destination: "0.0.0.0/0"
+            protocol: all
+            is_stateless: false
         ingress_security_rules:
-          - protocol: all
-            source: "{{ k8s_lb_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ local_subnet_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-            tcp_options:
-              destination_port_range:
-                max: 22
-                min: 22
           - protocol: all
             source: "{{ k8s_worker_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ k8s_controller_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ k8s_lb_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-            tcp_options:
-              destination_port_range:
-                max: 32244
-                min: 32244
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ k8s_lb_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-            tcp_options:
-              destination_port_range:
-                max: 10256
-                min: 10256
-          # Allow internal SSH to worker nodes
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ private_subnet_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-            tcp_options:
-              destination_port_range:
-                max: 22
-                min: 22
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ local_subnet_cidr }}"
-            is_stateless: false
-            source_type: CIDR_BLOCK
-            tcp_options:
-              destination_port_range:
-                max: 22
-                min: 22
-          # Pings
           - protocol: "{{ oci_vcn_icmp_protocol }}"
-            source: "{{ k8s_network_cidr }}"
+            source: "{{ k8s_controller_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
             icmp_options:
               type: 3
               code: 4
+          - protocol: all
+            source: "{{ k8s_controller_cidr }}"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+          - protocol: "{{ oci_vcn_tcp_protocol }}"
+            source: "0.0.0.0/0"
+            is_stateless: false
+            source_type: CIDR_BLOCK
+            tcp_options:
+              destination_port_range:
+                max: 22
+                min: 22
         freeform_tags:
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
@@ -364,14 +337,15 @@
         freeform_tags:
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
-        prohibit_internet_ingress: false
-        prohibit_public_ip_on_vnic: false
-        route_table_id: "{{ public_route_table.route_table.id }}"
+        prohibit_internet_ingress: true
+        prohibit_public_ip_on_vnic: true
+        route_table_id: "{{ natgw_route_table.route_table.id }}"
         security_list_ids: ["{{ controller_security_list.security_list.id }}"]
     - name: Debug Controller Subnet ID
       debug:
         var: controller_subnet.subnet.id
 
+# Bastion connects to the worker node subnet even for port forwards for the controller
 - name: Create Bastion(s)
   hosts: localhost
   gather_facts: false
@@ -382,17 +356,6 @@
         name: "{{ deployment_name }}WorkerBastion"
         compartment_id: "{{ created_compartment.compartment.id }}"
         target_subnet_id: "{{ worker_subnet.subnet.id }}"
-        client_cidr_block_allow_list: "{{ bastion_client_allow_list }}"
-        max_session_ttl_in_seconds: 10800
-        freeform_tags:
-          deployment: ansible
-          deployment_name: "{{ deployment_name }}"
-    - name: Create Bastion for controller network
-      oracle.oci.oci_bastion:
-        bastion_type: standard
-        name: "{{ deployment_name }}ControllerBastion"
-        compartment_id: "{{ created_compartment.compartment.id }}"
-        target_subnet_id: "{{ controller_subnet.subnet.id }}"
         client_cidr_block_allow_list: "{{ bastion_client_allow_list }}"
         max_session_ttl_in_seconds: 10800
         freeform_tags:
