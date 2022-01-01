@@ -177,7 +177,7 @@
                 min: 10256
           # Allow internal SSH to worker nodes
           - protocol: "{{ oci_vcn_tcp_protocol }}"
-            source: "{{ bastion_subnet_cidr }}"
+            source: "{{ private_subnet_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
             tcp_options:
@@ -377,14 +377,27 @@
   gather_facts: false
   tasks:
     - name: Create Bastion for worker network
-      bastion_type: standard
-      compartment_id: "{{ created_compartment.compartment.id }}"
-      target_subnet_id: "{{ worker_subnet.subnet.id }}"
+      oracle.oci.oci_bastion:
+        bastion_type: standard
+        name: "{{ deployment_name }}WorkerBastion"
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        target_subnet_id: "{{ worker_subnet.subnet.id }}"
+        client_cidr_block_allow_list: "{{ bastion_client_allow_list }}"
+        max_session_ttl_in_seconds: 10800
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
     - name: Create Bastion for controller network
-      bastion_type: standard
-      compartment_id: "{{ created_compartment.compartment.id }}"
-      target_subnet_id: "{{ controller_subnet.subnet.id }}"
-
+      oracle.oci.oci_bastion:
+        bastion_type: standard
+        name: "{{ deployment_name }}ControllerBastion"
+        compartment_id: "{{ created_compartment.compartment.id }}"
+        target_subnet_id: "{{ controller_subnet.subnet.id }}"
+        client_cidr_block_allow_list: "{{ bastion_client_allow_list }}"
+        max_session_ttl_in_seconds: 10800
+        freeform_tags:
+          deployment: ansible
+          deployment_name: "{{ deployment_name }}"
 
 - name: Create K8s Cluster
   hosts: localhost
