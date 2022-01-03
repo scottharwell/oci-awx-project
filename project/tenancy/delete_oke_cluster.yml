@@ -44,26 +44,6 @@
         state: absent
       with_items: "{{ cluster_facts.clusters }}"
 
-- name: Delete Block Storage
-  hosts: localhost
-  gather_facts: false
-  tasks:
-    - name: Get Block Volume Facts
-      oracle.oci.oci_blockstorage_volume_facts:
-        compartment_id: "{{ compartment.id }}"
-      register: block_volume_facts
-    - name: Debug Block Volume Facts
-      debug:
-        msg:
-          - "Block Volume ID: {{ item.id }}"
-      with_items: "{{ block_volume_facts.volumes }}"
-    - name: Delete Block Volume
-      oracle.oci.oci_blockstorage_volume:
-        compartment_id: "{{ compartment.id }}"
-        id: "{{ item.id }}"
-        state: absent
-      with_items: "{{ block_volume_facts.volumes }}"
-
 - name: Delete Bastions
   hosts: localhost
   gather_facts: false
@@ -84,6 +64,46 @@
         state: absent
       with_items: "{{ bastion_facts.bastions }}"
       when: bastion_facts is succeeded and (bastion_facts.bastions | length > 0)
+
+- name: Delete Block Storage
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get Block Volume Facts
+      oracle.oci.oci_blockstorage_volume_facts:
+        compartment_id: "{{ compartment.id }}"
+      register: block_volume_facts
+    - name: Debug Block Volume Facts
+      debug:
+        msg:
+          - "Block Volume ID: {{ item.id }}"
+      with_items: "{{ block_volume_facts.volumes }}"
+    - name: Delete Block Volume
+      oracle.oci.oci_blockstorage_volume:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ block_volume_facts.volumes }}"
+
+- name: Delete Load Balancers
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get Load Balancer Facts
+      oracle.oci.oci_loadbalancer_load_balancer_facts:
+        compartment_id: "{{ compartment.id }}"
+      register: load_balancer_facts
+    - name: Debug Load Balancer Facts
+      debug:
+        msg:
+          - "LB ID: {{ item.id }}"
+      with_items: "{{ load_balancer_facts.load_balancers }}"
+    - name: Delete Load Balancer
+      oracle.oci.oci_loadbalancer_load_balancer:
+        compartment_id: "{{ compartment.id }}"
+        id: "{{ item.id }}"
+        state: absent
+      with_items: "{{ load_balancer_facts.load_balancers }}"
 
 - name: Delete VCN
   hosts: localhost
