@@ -1,6 +1,11 @@
 ---
+- name: Create bastion service
+  import_playbook: create_bastion.yml
+  when: use_bastion is defined and use_bastion == true and subnet_id is defined
+
 - name: Create bastion sessions for private servers
   import_playbook: create_bastion_sessions.yml
+  when: use_bastion is defined and use_bastion == true and subnet_id is defined
 
 - name: Update running OCI VMs
   hosts: all_hosts
