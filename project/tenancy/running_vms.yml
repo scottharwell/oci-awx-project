@@ -8,7 +8,7 @@
       oracle.oci.oci_compute_instance_facts:
         compartment_id: "{{ oci_compartment_id }}"
       register: compute_facts
-    - name: Get machine IP addresses
+    - name: Get machine details
       set_fact:
         instances: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING`].{\"id\": id,\"primary_private_ip\": primary_private_ip,\"primary_public_ip\": primary_public_ip}') }}"
     - name: Found Instances
