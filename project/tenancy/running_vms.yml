@@ -10,8 +10,8 @@
       register: compute_facts
     - name: Get machine IP addresses
       set_fact:
-        ips: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING`].primary_public_ip') }}"
-    - name: Found IP addresses
+        instances: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING`].{\"id\": id,\"primary_private_ip\": primary_private_ip,\"primary_public_ip\": primary_public_ip}') }}"
+    - name: Found Instances
       debug:
-        var: ips
-      when: (ips is defined) and (ips | length > 0)
+        var: instances
+      when: (instances is defined) and (instances | length > 0)
