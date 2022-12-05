@@ -9,9 +9,9 @@
         compartment_id: "{{ oci_compartment_id }}"
       register: compute_facts
     - name: Get machine details
-      set_fact:
+      ansible.builtin.set_fact:
         instances: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING`].{\"id\": id,\"primary_private_ip\": primary_private_ip,\"primary_public_ip\": primary_public_ip}') }}"
     - name: Found Instances
-      debug:
+      ansible.builtin.set_stats:
         var: instances
       when: (instances is defined) and (instances | length > 0)

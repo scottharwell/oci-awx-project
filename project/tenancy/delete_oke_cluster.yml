@@ -8,14 +8,14 @@
         id: "{{ oci_compartment_id }}"
       register: compartment_facts
     - name: Get Compartment
-      set_fact:
+      ansible.builtin.set_fact:
         compartment: "{{ compartment_facts.compartments[0] }}"
     - name: Fail if compartment is not active
-      fail:
+      ansible.builtin.fail:
         msg: The compartment is not active
       when: compartment_facts.compartments[0].lifecycle_state != 'ACTIVE'
     - name: Debug Compartment Details
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Compartment ID: {{ compartment.id }}"
           - "Compartment Name: {{ compartment.name }}"
@@ -25,14 +25,14 @@
         compartment_id: "{{ compartment.id }}"
       register: cluster_facts
     - name: Fail if there are no clusters
-      fail:
+      ansible.builtin.fail:
         msg: There are no clusters in this compartment
       when: (cluster_facts.clusters | length < 1)
     - name: Set cluster fact
-      set_fact:
+      ansible.builtin.set_fact:
         cluster: "{{ cluster_facts.clusters[0] }}"
     - name: Debug Compartment Cluster Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Cluster ID: {{ cluster.id }}"
           - "Cluster Name: {{ cluster.name }}"
@@ -53,7 +53,7 @@
         compartment_id: "{{ compartment.id }}"
       register: bastion_facts
     - name: Debug Bastion Facts
-      debug:
+      ansible.builtin.debug:
         msg: "Bastion ID: {{ item.id }}"
       with_items: "{{ bastion_facts.bastions }}"
       when: bastion_facts is succeeded and (bastion_facts.bastions | length > 0)
@@ -74,7 +74,7 @@
         compartment_id: "{{ compartment.id }}"
       register: block_volume_facts
     - name: Debug Block Volume Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Block Volume ID: {{ item.id }}"
       with_items: "{{ block_volume_facts.volumes }}"
@@ -94,7 +94,7 @@
         compartment_id: "{{ compartment.id }}"
       register: load_balancer_facts
     - name: Debug Load Balancer Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "LB ID: {{ item.id }}"
       with_items: "{{ load_balancer_facts.load_balancers }}"
@@ -115,7 +115,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: subnet_facts
     - name: Debug Subnet Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Subnet ID: {{ item.id }}"
           - "Subnet CIDR: {{ item.cidr_block }}"
@@ -132,7 +132,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: route_table_facts
     - name: Debug Route Table Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Route Table ID: {{ item.id }}"
       with_items: "{{ route_table_facts.route_tables }}"
@@ -156,7 +156,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: internet_gateway_facts
     - name: Debug IGW Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "IGW ID: {{ item.id }}"
       with_items: "{{ internet_gateway_facts.internet_gateways }}"
@@ -173,7 +173,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: nat_gateway_facts
     - name: Debug NATGW Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "NATGW ID: {{ item.id }}"
       with_items: "{{ nat_gateway_facts.nat_gateways }}"
@@ -190,7 +190,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: service_gateway_facts
     - name: Debug Service GW Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Service GW ID: {{ item.id }}"
       with_items: "{{ service_gateway_facts.service_gateways }}"
@@ -207,7 +207,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: lp_gateway_facts
     - name: Debug LPGW Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "LPGW ID: {{ item.id }}"
       with_items: "{{ lp_gateway_facts.local_peering_gateways }}"
@@ -224,7 +224,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: security_list_facts
     - name: Debug Security Lists Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Security List ID: {{ item.id }}"
       with_items: "{{ security_list_facts.security_lists }}"
@@ -241,7 +241,7 @@
         vcn_id: "{{ cluster.vcn_id }}"
       register: drg_attachment_facts
     - name: Debug DRG Attachment Facts
-      debug:
+      ansible.builtin.debug:
         msg:
           - "DRG Attachment ID: {{ item.id }}"
       with_items: "{{ drg_attachment_facts.drg_attachments }}"

@@ -6,7 +6,7 @@
     connections: []
   tasks:
     - name: Verify SSH env var is set
-      fail:
+      ansible.builtin.fail:
         msg: "OCI_SSH_KEY_FILE is not set"
       when: lookup('env', 'OCI_SSH_KEY_FILE') is undefined or lookup('env', 'OCI_SSH_KEY_FILE') == ""
     - name: Get Ansible bastion
@@ -18,7 +18,7 @@
     #   debug:
     #     var: bastion_facts
     - name: Get Ansible bastion OCID
-      set_fact:
+      ansible.builtin.set_fact:
         bastion_ocid: "{{ bastion_facts | json_query('bastions[?lifecycle_state==`ACTIVE`].id | [0]') }}"
         cacheable: false
     # - name: Debug Bastion OCID
@@ -33,7 +33,7 @@
     #   debug:
     #     var: compute_facts
     - name: Get instance private ip
-      set_fact:
+      ansible.builtin.set_fact:
         instances: "{{ compute_facts | json_query('instances[?primary_public_ip==`null` && !(contains(display_name,`oke-`))]') }}"
     # - name: Debug instance private IPs
     #   debug:
@@ -57,20 +57,20 @@
       with_items: "{{ instances }}"
       when: bastion_ocid is defined and instances is defined and (instances | length > 0)
     - name: Set session details
-      set_fact:
-        connections: "{{ connections + [ session ] }}"
+      ansible.builtin.set_fact:
+        connections: "{{ connections + [session] }}"
       vars:
         session: |
           {
             'primary_private_ip': '{{ item.item.primary_private_ip }}',
-            'proxy_command': '{{ (item.session.ssh_metadata.command | regex_replace("<privateKey>", lookup('env', 'OCI_SSH_KEY_FILE')) | regex_search('ProxyCommand=\"(.*)\"', ignorecase=True) | regex_replace('ProxyCommand=\"(.*)\"','ProxyCommand=\"\1 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"', ignorecase=True)) }}'
+            'proxy_command': '{{ (item.session.ssh_metadata.command | regex_replace("<privateKey>", lookup('env', 'OCI_SSH_KEY_FILE')) | regex_search('ProxyCommand=\"(.*)\"', ignorecase=True) | regex_replace('ProxyCommand=\"(.*)\"', 'ProxyCommand=\"\1 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"', ignorecase=True)) }}'
           }
       with_items: "{{ bastion_sessions.results }}"
     - name: Debug connections
-      debug:
+      ansible.builtin.debug:
         var: connections
     - name: Add bastion host to inventory
-      add_host:
+      ansible.builtin.add_host:
         hostname: "{{ item.primary_private_ip }}"
         ansible_connection: ssh
         ansible_ssh_common_args: "-o {{ item.proxy_command }}"

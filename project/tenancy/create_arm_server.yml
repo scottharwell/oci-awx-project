@@ -31,6 +31,6 @@
         freeform_tags:
           deployment: "ansible"
     - name: Instance Details
-      debug:
+      ansible.builtin.set_stats:
         var: created_instance
       when: created_instance is succeeded

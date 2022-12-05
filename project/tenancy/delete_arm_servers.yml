@@ -9,10 +9,10 @@
       oracle.oci.oci_compute_instance_facts:
         compartment_id: "{{ oci_compartment_id }}"
     - name: Get OCIDs
-      set_fact:
+      ansible.builtin.set_fact:
         ocids: "{{ instance_facts | json_query('instances[?freeform_tags.deployment==`ansible` && lifecycle_state!=`TERMINATED`].id') }}"
     - name: Found OCIDs
-      debug:
+      ansible.builtin.debug:
         var: ocids
     - name: Delete instances
       oracle.oci.oci_compute_instance:
@@ -23,6 +23,6 @@
       register: deleted_instances
       when: (ocids is defined) and (ocids | length > 0)
     - name: Debug deleted instances
-      debug:
+      ansible.builtin.debug:
         var: deleted_instances.msg
       when: deleted_instances is succeeded and deleted_instances.msg is defined

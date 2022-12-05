@@ -14,7 +14,7 @@
           deployment: ansible
       register: oci_vcn
     - name: Debug VCN
-      debug:
+      ansible.builtin.debug:
         var: oci_vcn.vcn.id
 
 - name: Create Security Lists
@@ -77,7 +77,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug Public Security List ID
-      debug:
+      ansible.builtin.debug:
         var: public_security_list.security_list.id
     - name: Create Web Security List
       register: web_security_list
@@ -118,7 +118,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug Web Security List ID
-      debug:
+      ansible.builtin.debug:
         var: web_security_list.security_list.id
     - name: Create Private Security List
       register: private_security_list
@@ -148,7 +148,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug Private Security List ID
-      debug:
+      ansible.builtin.debug:
         var: private_security_list.security_list.id
 
 - name: Create Internet Gateway
@@ -165,7 +165,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug Internet Gateway ID
-      debug:
+      ansible.builtin.debug:
         var: internet_gateway.internet_gateway.id
 
 - name: Create NAT Gateway
@@ -181,7 +181,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug NAT Gateway ID
-      debug:
+      ansible.builtin.debug:
         var: nat_gateway.nat_gateway.id
 
 - name: Create Peering Gateway
@@ -197,7 +197,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug Peering Gateway ID
-      debug:
+      ansible.builtin.debug:
         var: peergw_gateway.nat_gateway.id
 
 - name: Create Route Tables
@@ -218,7 +218,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug Internet Gateway Route Table ID
-      debug:
+      ansible.builtin.debug:
         var: igw_route_table.route_table.id
     - name: NAT Gateway Route Table
       register: natgw_route_table
@@ -234,7 +234,7 @@
         freeform_tags:
           deployment: ansible
     - name: Debug NAT Gateway Route Table ID
-      debug:
+      ansible.builtin.debug:
         var: natgw_route_table.route_table.id
 
 - name: Configure Standard Subnets
@@ -256,7 +256,7 @@
         route_table_id: "{{ igw_route_table.route_table.id }}"
         security_list_ids: ["{{ public_security_list.security_list.id }}"]
     - name: Debug Public Subnet ID
-      debug:
+      ansible.builtin.debug:
         var: public_subnet.subnet.id
     - name: Create Private Subnet
       register: private_subnet
@@ -273,5 +273,5 @@
         route_table_id: "{{ natgw_route_table.route_table.id }}"
         security_list_ids: ["{{ private_security_list.security_list.id }}"]
     - name: Debug Private Subnet ID
-      debug:
+      ansible.builtin.debug:
         var: private_subnet.subnet.id

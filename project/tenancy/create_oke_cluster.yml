@@ -14,10 +14,10 @@
           deployment_name: "{{ deployment_name }}"
       when: compartment_name is defined
     - name: Debug Compartment id
-      debug:
+      ansible.builtin.debug:
         var: created_compartment.compartment.id
     - name: Sleep for 15 seconds and continue with play to ensure compartment exists
-      wait_for:
+      ansible.builtin.wait_for:
         timeout: 15
       delegate_to: localhost
 
@@ -37,7 +37,7 @@
         is_ipv6_enabled: false
       register: created_vcn
     - name: Debug VCN Facts
-      debug:
+      ansible.builtin.debug:
         var: created_vcn.vcn.id
     - name: Create Controller Subnet Security List
       register: controller_security_list
@@ -100,7 +100,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug Controller Security List ID
-      debug:
+      ansible.builtin.debug:
         var: controller_security_list.security_list.id
     - name: Create Worker Security List
       register: worker_security_list
@@ -177,7 +177,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug Worker Security List ID
-      debug:
+      ansible.builtin.debug:
         var: worker_security_list.security_list.id
     - name: Create Load Balancer Security List
       register: lb_security_list
@@ -211,7 +211,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug Load Balancer Security List ID
-      debug:
+      ansible.builtin.debug:
         var: lb_security_list.security_list.id
     - name: Create Internet Gateway
       register: created_igw
@@ -224,7 +224,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug Internet Gateway ID
-      debug:
+      ansible.builtin.debug:
         var: created_igw.internet_gateway.id
     - name: Create NAT Gateway
       register: created_natgw
@@ -236,7 +236,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug NAT Gateway ID
-      debug:
+      ansible.builtin.debug:
         var: created_natgw.nat_gateway.id
     - name: Create Service Gateway
       register: created_servicegw
@@ -250,7 +250,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug Service Gateway ID
-      debug:
+      ansible.builtin.debug:
         var: created_servicegw.service_gateway.id
     - name: Public Network Route Table
       register: public_route_table
@@ -267,7 +267,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug Public Network Route Table ID
-      debug:
+      ansible.builtin.debug:
         var: public_route_table.route_table.id
     - name: Private Route Table
       register: natgw_route_table
@@ -288,7 +288,7 @@
           deployment: ansible
           deployment_name: "{{ deployment_name }}"
     - name: Debug NAT Gateway Route Table ID
-      debug:
+      ansible.builtin.debug:
         var: natgw_route_table.route_table.id
     - name: Create LB Subnet
       register: lb_subnet
@@ -306,7 +306,7 @@
         route_table_id: "{{ public_route_table.route_table.id }}"
         security_list_ids: ["{{ lb_security_list.security_list.id }}"]
     - name: Debug LB Subnet ID
-      debug:
+      ansible.builtin.debug:
         var: lb_subnet.subnet.id
     - name: Create Worker Subnet
       register: worker_subnet
@@ -324,7 +324,7 @@
         route_table_id: "{{ natgw_route_table.route_table.id }}"
         security_list_ids: ["{{ worker_security_list.security_list.id }}"]
     - name: Debug Worker Subnet ID
-      debug:
+      ansible.builtin.debug:
         var: worker_subnet.subnet.id
     - name: Create Controller Subnet
       register: controller_subnet
@@ -342,7 +342,7 @@
         route_table_id: "{{ natgw_route_table.route_table.id }}"
         security_list_ids: ["{{ controller_security_list.security_list.id }}"]
     - name: Debug Controller Subnet ID
-      debug:
+      ansible.builtin.debug:
         var: controller_subnet.subnet.id
 
 # Bastion connects to the worker node subnet even for port forwards for the controller
@@ -381,7 +381,7 @@
         image_policy_config:
           is_policy_enabled: false
     - name: Debug Cluster
-      debug:
+      ansible.builtin.debug:
         var: k8s_cluster.cluster.id
     - name: Create node pool
       register: node_pool
