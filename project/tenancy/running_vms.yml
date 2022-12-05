@@ -13,5 +13,6 @@
         instances: "{{ compute_facts | json_query('instances[?lifecycle_state==`RUNNING`].{\"id\": id,\"primary_private_ip\": primary_private_ip,\"primary_public_ip\": primary_public_ip}') }}"
     - name: Found Instances
       ansible.builtin.set_stats:
-        var: instances
+        data:
+          instances: instances
       when: (instances is defined) and (instances | length > 0)

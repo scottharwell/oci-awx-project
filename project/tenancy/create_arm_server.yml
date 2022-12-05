@@ -32,5 +32,6 @@
           deployment: "ansible"
     - name: Instance Details
       ansible.builtin.set_stats:
-        var: created_instance
+        data:
+          instances: created_instance
       when: created_instance is succeeded
