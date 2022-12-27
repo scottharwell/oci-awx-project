@@ -1,5 +1,3 @@
 ---
 skip_list:
-  - package-latest
-  - ignore-errors
-  - syntax-checking[specific]
+  - yaml[line-length]

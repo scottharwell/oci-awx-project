@@ -1,6 +1,0 @@
----
-roles:
-  - name: scottharwell.server_setup
-    scm: git
-    src: https://github.com/scottharwell/ansible-role-server-setup.git
-    version: main

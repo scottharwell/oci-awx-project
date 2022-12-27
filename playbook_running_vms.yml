@@ -6,7 +6,7 @@
   tasks:
     - name: Get OCI Compute Instance Facts
       oracle.oci.oci_compute_instance_facts:
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ compartment_id }}"
       register: compute_facts
     - name: Get machine details
       ansible.builtin.set_fact:

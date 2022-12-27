@@ -1,0 +1,5 @@
+---
+- name: Deploy VCN
+  ansible.builtin.import_tasks: vcn.yml
+  tags:
+    - vcn

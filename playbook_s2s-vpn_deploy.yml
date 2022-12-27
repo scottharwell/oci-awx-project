@@ -1,0 +1,10 @@
+---
+- name: Deploy site to site VPN network
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Import site to site VPN role
+      ansible.builtin.import_role:
+        name: site_to_site_vpn

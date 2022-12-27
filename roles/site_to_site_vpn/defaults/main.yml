@@ -1,0 +1,36 @@
+---
+config_profile_name: DEFAULT
+oci:
+  vcn_protocols:
+    ICMP: "1"
+    TCP: "6"
+    UDP: "17"
+    ICMPv6: "58"
+    all: all
+vcn:
+  cidr_blocks:
+    - "172.16.240.0/20"
+  display_name: Site to Site VCN
+  dns_label: s2svcn
+  subnets:
+    - display_name: primary
+      cidr_block: "172.16.240.0/23"
+      prohibit_internet_ingress: true
+      prohibit_public_ip_on_vnic: true
+      freeform_tags:
+        deployment: ansible
+        accessibility: private
+    - display_name: private
+      cidr_block: "172.16.242.0/24"
+      prohibit_internet_ingress: true
+      prohibit_public_ip_on_vnic: true
+      freeform_tags:
+        deployment: ansible
+        accessibility: private
+    - display_name: public
+      cidr_block: "172.16.243.0/24"
+      prohibit_internet_ingress: false
+      prohibit_public_ip_on_vnic: false
+      freeform_tags:
+        deployment: ansible
+        accessibility: public
