@@ -3,3 +3,8 @@
   ansible.builtin.import_tasks: vcn.yml
   tags:
     - vcn
+
+- name: Deploy customer connectivity
+  ansible.builtin.import_tasks: customer_connectivity.yml
+  tags:
+    - customer_connectivity

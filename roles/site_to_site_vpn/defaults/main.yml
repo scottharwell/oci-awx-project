@@ -34,3 +34,17 @@ vcn:
       freeform_tags:
         deployment: ansible
         accessibility: public
+customer_connectivity:
+  drg:
+    display_name: S2S VPN DRG
+  cpe:
+    display_name: GSO CPE
+    device_shape: "0c14a129-ce70-43f3-bf07-e980a6784ae8"
+    ip_address: "97.75.152.17"
+  ip_sec_connection:
+    display_name: GSO IPSEC Connection
+    routing: STATIC
+    ike_version: V1
+    shared_secret: change_me
+    cpe_local_identifier: 97.75.152.17
+    cpe_local_identifier_type: IP_ADDRESS

@@ -13,4 +13,5 @@ ansible-navigator run playbook_s2s-vpn_deploy.yml \
 --eev $HOME/.oci:/home/runner/.oci \
 --extra-vars "ansible_python_interpreter=/usr/bin/python3" \
 --extra-vars "compartment_id=$OCI_COMPARTMENT_OCID"
+--extra-vars "vpn_shared_secret=$VPN_SHARED_SECRET"
 ```

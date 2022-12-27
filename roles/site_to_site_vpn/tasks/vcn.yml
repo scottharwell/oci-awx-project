@@ -117,7 +117,6 @@
         protocol: all
         is_stateless: false
     ingress_security_rules:
-      # Allow SSH
       - protocol: "{{ oci.vcn_protocols.TCP }}"
         source: "{{ vcn.cidr_blocks[0] }}"
         is_stateless: false
@@ -126,9 +125,20 @@
           destination_port_range:
             max: 22
             min: 22
-      # Allow Internal Pings
+      - protocol: "{{ oci.vcn_protocols.TCP }}"
+        source: "192.168.2.0/24"
+        is_stateless: false
+        source_type: CIDR_BLOCK
+        tcp_options:
+          destination_port_range:
+            max: 22
+            min: 22
       - protocol: "{{ oci.vcn_protocols.ICMP }}"
         source: "{{ vcn.cidr_blocks[0] }}"
+        is_stateless: false
+        source_type: CIDR_BLOCK
+      - protocol: "{{ oci.vcn_protocols.ICMP }}"
+        source: "192.168.2.0/24"
         is_stateless: false
         source_type: CIDR_BLOCK
     freeform_tags:
@@ -235,10 +245,10 @@
       internet_gateway_id: "{{ internet_gateway.internet_gateway.id }}"
       nat_gateway_id: "{{ nat_gateway.nat_gateway.id }}"
       peergw_gateway_id: "{{ peergw_gateway.local_peering_gateway.id }}"
-      igw_route_table: "{{ igw_route_table.route_table.id }}"
-      natgw_route_table: "{{ natgw_route_table.route_table.id }}"
-  register: stats
+      igw_route_table_id: "{{ igw_route_table.route_table.id }}"
+      natgw_route_table_id: "{{ natgw_route_table.route_table.id }}"
+  register: vcn_stats
 
 - name: Debug
   ansible.builtin.debug:
-    var: stats
+    var: vcn_stats

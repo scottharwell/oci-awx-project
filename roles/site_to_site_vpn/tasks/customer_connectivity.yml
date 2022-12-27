@@ -1,0 +1,91 @@
+---
+- name: Create CPE
+  oracle.oci.oci_network_cpe:
+    compartment_id: "{{ compartment_id }}"
+    ip_address: "{{ customer_connectivity.cpe.ip_address }}"
+    display_name: "{{ customer_connectivity.cpe.display_name }}"
+    freeform_tags:
+      deployment: ansible
+    cpe_device_shape_id: "{{ customer_connectivity.cpe.device_shape }}"
+  register: cpe_results
+  tags:
+    - customer_connectivity
+
+- name: Create DRG
+  oracle.oci.oci_network_drg:
+    compartment_id: "{{ compartment_id }}"
+    display_name: "{{ customer_connectivity.drg.display_name }}"
+    freeform_tags:
+      deployment: ansible
+  register: drg_results
+  tags:
+    - customer_connectivity
+
+- name: Create DRG attachment
+  oracle.oci.oci_network_drg_attachment:
+    compartment_id: "{{ compartment_id }}"
+    drg_id: "{{ drg_results.drg.id }}"
+    vcn_id: "{{ vcn_stats.ansible_stats.data.vcn_id }}"
+    display_name: "{{ vcn.display_name }} Attachment"
+    freeform_tags:
+      deployment: ansible
+  tags:
+    - customer_connectivity
+
+- name: Update public route table to DRG
+  oracle.oci.oci_network_route_table:
+    compartment_id: "{{ compartment_id }}"
+    rt_id: "{{ vcn_stats.ansible_stats.data.igw_route_table_id }}"
+    purge_route_rules: false
+    route_rules:
+      - network_entity_id: "{{ drg_results.drg.id }}"
+        destination: "192.168.2.0/24"
+        destination_type: CIDR_BLOCK
+        description: On prem traffic
+      - network_entity_id: "{{ drg_results.drg.id }}"
+        destination: "192.168.4.0/24"
+        destination_type: CIDR_BLOCK
+        description: On prem traffic
+  tags:
+    - customer_connectivity
+
+- name: Update private route table to DRG
+  oracle.oci.oci_network_route_table:
+    compartment_id: "{{ compartment_id }}"
+    rt_id: "{{ vcn_stats.ansible_stats.data.natgw_route_table_id }}"
+    purge_route_rules: false
+    route_rules:
+      - network_entity_id: "{{ drg_results.drg.id }}"
+        destination: "192.168.2.0/24"
+        destination_type: CIDR_BLOCK
+        description: On prem traffic
+      - network_entity_id: "{{ drg_results.drg.id }}"
+        destination: "192.168.4.0/24"
+        destination_type: CIDR_BLOCK
+        description: On prem traffic
+  tags:
+    - customer_connectivity
+
+- name: Create ip_sec_connection
+  oracle.oci.oci_network_ip_sec_connection:
+    compartment_id: "{{ compartment_id }}"
+    cpe_id: "{{ cpe_results.cpe.id }}"
+    drg_id: "{{ drg_results.drg.id }}"
+    static_routes:
+      - "192.168.2.0/24"
+      - "192.168.4.0/24"
+    tunnel_configuration:
+      - display_name: GSO Tunnel
+        routing: STATIC
+        ike_version: V1
+        shared_secret: "{{ vpn_shared_secret }}"
+        oracle_initiation: INITIATOR_OR_RESPONDER
+        nat_translation_enabled: AUTO
+    display_name: "{{ customer_connectivity.ip_sec_connection.display_name }}"
+    freeform_tags:
+      deployment: ansible
+    cpe_local_identifier: "{{ customer_connectivity.ip_sec_connection.cpe_local_identifier }}"
+    cpe_local_identifier_type: "{{ customer_connectivity.ip_sec_connection.cpe_local_identifier_type }}"
+  register: ipsec_results
+  tags:
+    - customer_connectivity
