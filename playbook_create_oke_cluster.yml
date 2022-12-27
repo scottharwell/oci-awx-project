@@ -6,7 +6,7 @@
     - name: Create compartment for cluster
       register: created_compartment
       oracle.oci.oci_identity_compartment:
-        parent_compartment_id: "{{ oci_tenancy_id }}"
+        parent_compartment_id: "{{ tenancy_id }}"
         name: "{{ compartment_name }}"
         description: "{{ compartment_description }}"
         freeform_tags:
@@ -48,7 +48,7 @@
         egress_security_rules:
           - destination: "{{ servicegw_dest_cidr }}"
             destination_type: SERVICE_CIDR_BLOCK
-            protocol: "{{ oci_vcn_tcp_protocol }}"
+            protocol: "{{ vcn_tcp_protocol }}"
             is_stateless: false
             tcp_options:
               destination_port_range:
@@ -58,13 +58,13 @@
             protocol: all
             is_stateless: false
           - destination: "{{ k8s_worker_cidr }}"
-            protocol: "{{ oci_vcn_icmp_protocol }}"
+            protocol: "{{ vcn_icmp_protocol }}"
             is_stateless: false
             icmp_options:
               type: 3
               code: 4
         ingress_security_rules:
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
+          - protocol: "{{ vcn_tcp_protocol }}"
             source: "0.0.0.0/0"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -72,7 +72,7 @@
               destination_port_range:
                 max: 6443
                 min: 6443
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
+          - protocol: "{{ vcn_tcp_protocol }}"
             source: "{{ k8s_worker_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -80,7 +80,7 @@
               destination_port_range:
                 max: 6443
                 min: 6443
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
+          - protocol: "{{ vcn_tcp_protocol }}"
             source: "{{ k8s_worker_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -89,7 +89,7 @@
                 max: 12250
                 min: 12250
           # Pings
-          - protocol: "{{ oci_vcn_icmp_protocol }}"
+          - protocol: "{{ vcn_icmp_protocol }}"
             source: "{{ k8s_worker_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -113,35 +113,35 @@
             protocol: all
             is_stateless: false
           - destination: "{{ k8s_controller_cidr }}"
-            protocol: "{{ oci_vcn_tcp_protocol }}"
+            protocol: "{{ vcn_tcp_protocol }}"
             is_stateless: false
             tcp_options:
               destination_port_range:
                 max: 6443
                 min: 6443
           - destination: "{{ k8s_controller_cidr }}"
-            protocol: "{{ oci_vcn_tcp_protocol }}"
+            protocol: "{{ vcn_tcp_protocol }}"
             is_stateless: false
             tcp_options:
               destination_port_range:
                 max: 12250
                 min: 12250
           - destination: "{{ k8s_controller_cidr }}"
-            protocol: "{{ oci_vcn_icmp_protocol }}"
+            protocol: "{{ vcn_icmp_protocol }}"
             is_stateless: false
             icmp_options:
               type: 3
               code: 4
           - destination: "{{ servicegw_dest_cidr }}"
             destination_type: SERVICE_CIDR_BLOCK
-            protocol: "{{ oci_vcn_tcp_protocol }}"
+            protocol: "{{ vcn_tcp_protocol }}"
             is_stateless: false
             tcp_options:
               destination_port_range:
                 max: 443
                 min: 443
           - destination: "0.0.0.0/0"
-            protocol: "{{ oci_vcn_icmp_protocol }}"
+            protocol: "{{ vcn_icmp_protocol }}"
             is_stateless: false
             icmp_options:
               type: 3
@@ -154,7 +154,7 @@
             source: "{{ k8s_worker_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
-          - protocol: "{{ oci_vcn_icmp_protocol }}"
+          - protocol: "{{ vcn_icmp_protocol }}"
             source: "{{ k8s_controller_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -165,7 +165,7 @@
             source: "{{ k8s_controller_cidr }}"
             is_stateless: false
             source_type: CIDR_BLOCK
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
+          - protocol: "{{ vcn_tcp_protocol }}"
             source: "0.0.0.0/0"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -191,7 +191,7 @@
             is_stateless: false
         ingress_security_rules:
           # Allow Web Traffic
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
+          - protocol: "{{ vcn_tcp_protocol }}"
             source: "0.0.0.0/0"
             is_stateless: false
             source_type: CIDR_BLOCK
@@ -199,7 +199,7 @@
               destination_port_range:
                 max: 80
                 min: 80
-          - protocol: "{{ oci_vcn_tcp_protocol }}"
+          - protocol: "{{ vcn_tcp_protocol }}"
             source: "0.0.0.0/0"
             is_stateless: false
             source_type: CIDR_BLOCK

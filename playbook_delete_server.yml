@@ -6,6 +6,6 @@
   tasks:
     - name: Delete instances
       oracle.oci.oci_compute_instance:
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ compartment_id }}"
         id: "{{ instance_ocid }}"
         state: absent

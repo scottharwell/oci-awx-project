@@ -47,4 +47,3 @@ customer_connectivity:
     ike_version: V1
     shared_secret: change_me
     cpe_local_identifier: 97.75.152.17
-    cpe_local_identifier_type: IP_ADDRESS

@@ -5,7 +5,7 @@
   tasks:
     - name: Get Compartment Facts
       oracle.oci.oci_identity_compartment_facts:
-        id: "{{ oci_compartment_id }}"
+        id: "{{ compartment_id }}"
       register: compartment_facts
     - name: Get Compartment
       ansible.builtin.set_fact:

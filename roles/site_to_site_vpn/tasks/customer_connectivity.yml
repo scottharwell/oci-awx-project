@@ -85,7 +85,7 @@
     freeform_tags:
       deployment: ansible
     cpe_local_identifier: "{{ customer_connectivity.ip_sec_connection.cpe_local_identifier }}"
-    cpe_local_identifier_type: "{{ customer_connectivity.ip_sec_connection.cpe_local_identifier_type }}"
+    cpe_local_identifier_type: IP_ADDRESS
   register: ipsec_results
   tags:
     - customer_connectivity

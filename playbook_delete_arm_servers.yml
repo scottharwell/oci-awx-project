@@ -7,7 +7,7 @@
     - name: Get instance facts
       register: instance_facts
       oracle.oci.oci_compute_instance_facts:
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ compartment_id }}"
     - name: Get OCIDs
       ansible.builtin.set_fact:
         ocids: "{{ instance_facts | json_query('instances[?freeform_tags.deployment==`ansible` && lifecycle_state!=`TERMINATED`].id') }}"
@@ -16,7 +16,7 @@
         var: ocids
     - name: Delete instances
       oracle.oci.oci_compute_instance:
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ compartment_id }}"
         id: "{{ item }}"
         state: absent
       with_items: "{{ ocids }}"

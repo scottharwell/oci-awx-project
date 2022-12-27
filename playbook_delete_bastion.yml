@@ -7,5 +7,5 @@
       oracle.oci.oci_bastion:
         bastion_type: standard
         state: absent
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ compartment_id }}"
         bastion_id: "{{ ocid }}"

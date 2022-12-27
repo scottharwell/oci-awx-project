@@ -7,7 +7,7 @@
       oracle.oci.oci_bastion:
         bastion_type: standard
         state: present
-        compartment_id: "{{ oci_compartment_id }}"
+        compartment_id: "{{ compartment_id }}"
         target_subnet_id: "{{ subnet_id }}"
         name: "{{ bastion_name }}"
         client_cidr_block_allow_list: "{{ allowed_ips }}"
