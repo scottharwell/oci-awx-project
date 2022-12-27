@@ -133,12 +133,24 @@
           destination_port_range:
             max: 22
             min: 22
+      - protocol: "{{ oci.vcn_protocols.TCP }}"
+        source: "192.168.4.0/24"
+        is_stateless: false
+        source_type: CIDR_BLOCK
+        tcp_options:
+          destination_port_range:
+            max: 22
+            min: 22
       - protocol: "{{ oci.vcn_protocols.ICMP }}"
         source: "{{ vcn.cidr_blocks[0] }}"
         is_stateless: false
         source_type: CIDR_BLOCK
       - protocol: "{{ oci.vcn_protocols.ICMP }}"
         source: "192.168.2.0/24"
+        is_stateless: false
+        source_type: CIDR_BLOCK
+      - protocol: "{{ oci.vcn_protocols.ICMP }}"
+        source: "192.168.4.0/24"
         is_stateless: false
         source_type: CIDR_BLOCK
     freeform_tags:
