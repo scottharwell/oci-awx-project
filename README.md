@@ -5,7 +5,7 @@
 ### Deploy Site to Site VPN
 
 ```bash
-ansible-navigator run playbook_s2s-vpn_deploy.yml \
+ansible-navigator run harwell.oci.s2s-vpn_deploy.yml \
 -i inventory/hosts \
 --limit localhost \
 --pae false --mode stdout --ce docker --ee true --pp always --eei quay.io/scottharwell/cloud-ee:latest \

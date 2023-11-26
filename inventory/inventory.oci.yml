@@ -28,9 +28,9 @@ enable_parallel_processing: true
 
 # Sets the inventory_hostname. Each item is a Jinja2 expression and it gets evaluated on host_vars.
 hostname_format_preferences:
-  # - "public_ip"
   # - "display_name+'.oci.com'"
   - "private_ip"
+  - "public_ip"
 
 groups:
   terraform: "'terraform' == freeform_tags.deployment"
